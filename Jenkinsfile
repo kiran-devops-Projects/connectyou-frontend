@@ -12,7 +12,7 @@ pipeline {
         BACKEND_IMAGE = "${IMAGE_NAME}:${IMAGE_TAG}"
         ECR_BACKEND_IMAGE = "${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${IMAGE_NAME}:${IMAGE_TAG}"
         GIT_USER_NAME = 'kiran877'
-        GIT_REPO_NAME = 'connectyoubackend'
+        GIT_REPO_NAME = 'connectyou-frontend'
         GIT_ORG_NAME = 'kiran-devops-Projects'
     }
 
@@ -51,7 +51,7 @@ pipeline {
                             sh '''
                                 ${SCANNER_HOME}/bin/sonar-scanner \
                                 -Dsonar.token=$SONAR_TOKEN \
-                                -Dsonar.projectKey=connetyou-backend
+                                -Dsonar.projectKey=connetyou-frontend
                             '''.stripIndent().replace('${SCANNER_HOME}', scannerHome)
                         }
                     }
