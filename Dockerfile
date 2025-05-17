@@ -1,27 +1,31 @@
-# Use Node.js LTS base image
-FROM node:18-alpine
+# Stage 1: Build the React app
+FROM node:18-alpine AS builder
 
-# Set working directory
-WORKDIR /usr/src/app
+WORKDIR /app
 
-# Copy package files
+# Install dependencies
 COPY package*.json ./
-
-# Install all dependencies (including devDependencies for build)
 RUN npm install
 
-# Copy all files (including .env.production explicitly)
+# Copy source and env file
 COPY . .
 COPY .env.production .env
 
-# Build the app (Next.js or React)
+# Build the React app
 RUN npm run build
 
-# Set environment variable for production mode
-ENV NODE_ENV=production
+# Stage 2: Serve the build with a lightweight server
+FROM node:18-alpine
 
-# Expose the port (adjust for your framework: 3000 for Next.js, 80 for Nginx)
+# Install 'serve' to serve the static site
+RUN npm install -g serve
+
+# Copy the build output
+COPY --from=builder /app/build /app/build
+
+WORKDIR /app
+
 EXPOSE 3000
 
-# Start the app in production mode
-CMD ["npm", "start"]
+# Serve the static files
+CMD ["serve", "-s", "build", "-l", "3000"]
