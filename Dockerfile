@@ -7,19 +7,20 @@ WORKDIR /usr/src/app
 # Copy package files
 COPY package*.json ./
 
-# Install ALL dependencies (you need devDeps for build step)
+# Install all dependencies (including devDependencies for build)
 RUN npm install
 
-# Copy rest of the application
+# Copy all files (including .env.production explicitly)
 COPY . .
+COPY .env.production .env
 
-# Build the Next.js app
+# Build the app (Next.js or React)
 RUN npm run build
 
-# Set environment variable for production mode (runtime)
+# Set environment variable for production mode
 ENV NODE_ENV=production
 
-# Expose the port your app runs on
+# Expose the port (adjust for your framework: 3000 for Next.js, 80 for Nginx)
 EXPOSE 3000
 
 # Start the app in production mode
