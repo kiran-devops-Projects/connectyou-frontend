@@ -6,6 +6,7 @@ import io from 'socket.io-client';
 import Navbar from '../../components/shared/Navbar';
 import { jwtDecode } from 'jwt-decode';
 
+const SOCKET_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
 let socket;
 
 const MessagesPage = () => {
@@ -64,8 +65,8 @@ const MessagesPage = () => {
   useEffect(() => {
     if (!user?.userId) return;
     
-    const SOCKET_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
-    console.log('Connecting socket to:', SOCKET_URL);
+    // const SOCKET_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+    // console.log('Connecting socket to:', SOCKET_URL);
 
     socket = io(SOCKET_URL, {
       transports: ['websocket'],
