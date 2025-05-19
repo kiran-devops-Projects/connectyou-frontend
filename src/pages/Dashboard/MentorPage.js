@@ -14,10 +14,11 @@ const MentorCard = ({ mentor, onRequestSession }) => (
   >
     <div className="relative">
       <img
-        src={`http://localhost:5000/${mentor.image}`}
-        alt={mentor.name}
-        className="w-full h-48 object-cover rounded-t-lg transition-transform duration-300 hover:scale-110"
-      />
+  src={`${process.env.REACT_APP_BACKEND_URL}/${mentor.image}`}
+  alt={mentor.name}
+  className="w-full h-48 object-cover rounded-t-lg transition-transform duration-300 hover:scale-110"
+/>
+
       
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
     </div>
@@ -88,13 +89,14 @@ const MentorPage = () => {
     return;
   }
 
-  axios.get("http://localhost:5000/api/mentor/", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-    .then(res => setMentors(res.data))
-    .catch(err => console.error("❌ Error fetching mentors:", err));
+  axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/mentor/`, {
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+})
+  .then(res => setMentors(res.data))
+  .catch(err => console.error("❌ Error fetching mentors:", err));
+
   }, []);
 
   // // import jwt_decode from 'jwt-decode';
@@ -127,7 +129,7 @@ const MentorPage = () => {
     console.log("mentorId (URL):", mentor._id);
     console.log("userId (Body):", userId);
   
-    axios.post(`http://localhost:5000/api/mentor/request/${mentor._id}`, {
+    axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/mentor/request/${mentor._id}`, {
       studentId: userId, // 📝 Still sending as studentId to match backend schema
       mentorId: mentor._id // Optional if backend uses URL param
     })

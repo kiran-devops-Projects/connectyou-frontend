@@ -53,11 +53,11 @@ const Dashboard = () => {
   
         // Fetch data for all sections in parallel, including auth headers for protected routes
         const [coursesRes, eventsRes, jobsRes, mentorsRes, notificationsRes] = await Promise.all([
-          fetch('http://localhost:5000/api/courses'),
-          fetch('http://localhost:5000/api/events'),
-          fetch('http://localhost:5000/api/jobs'),
-          fetch('http://localhost:5000/api/mentor', { headers }), // Add auth headers here
-          fetch('http://localhost:5000/api/notifications')
+          fetch(`${process.env.REACT_APP_BACKEND_URL}/api/courses`),
+          fetch(`${process.env.REACT_APP_BACKEND_URL}/api/events`),
+          fetch(`${process.env.REACT_APP_BACKEND_URL}/api/jobs`),
+          fetch(`${process.env.REACT_APP_BACKEND_URL}/api/mentor`, { headers }), // Add auth headers here
+          fetch(`${process.env.REACT_APP_BACKEND_URL}/api/notifications`)
         ]);
   
         // Parse all responses
@@ -234,7 +234,7 @@ const Dashboard = () => {
                       <div key={course.id} className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
                         <div className="w-16 h-16 flex-shrink-0">
                           <img 
-                            src={`http://localhost:5000/${course.thumbnail}`}
+                            src={`${process.env.REACT_APP_BACKEND_URL}/${course.thumbnail}`}
                             alt={course.title} 
                             className="w-full h-full object-cover rounded-md"
                           />
@@ -453,7 +453,7 @@ const Dashboard = () => {
                       <div key={mentor._id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                         <div className="relative">
                           <img
-                            src={`http://localhost:5000/${mentor.image}`}
+                            src={`${process.env.REACT_APP_BACKEND_URL}/${mentor.image}`}
                             alt={mentor.name}
                             className="w-full h-32 object-cover"
                           />

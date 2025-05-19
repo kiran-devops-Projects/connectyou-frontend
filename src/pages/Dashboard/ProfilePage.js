@@ -25,25 +25,30 @@ const ProfilePage = () => {
   const navigate = useNavigate();
 
   const getProfile = async (token) => {
-    const response = await axios.get('http://localhost:5000/api/profile/', {
+  const response = await axios.get(
+    `${process.env.REACT_APP_BACKEND_URL}/api/profile/`,
+    {
       headers: { Authorization: `Bearer ${token}` },
-    });
-    return response;
-  };
+    }
+  );
+  return response;
+};
 
-  const updateProfile = async (token, profileData) => {
-    // Create a copy that excludes the name field which is handled separately
-    const { name, ...profileDataToSend } = profileData;
-    
-    const response = await axios.put('http://localhost:5000/api/profile/updateprofile', profileDataToSend, {
+const updateProfile = async (token, profileData) => {
+  // Create a copy that excludes the name field which is handled separately
+  const { name, ...profileDataToSend } = profileData;
+
+  const response = await axios.put(
+    `${process.env.REACT_APP_BACKEND_URL}/api/profile/updateprofile`,
+    profileDataToSend,
+    {
       headers: { Authorization: `Bearer ${token}` },
-    });
-    
-    // If you need to update the name separately, you'd need another API endpoint
-    // This is a placeholder comment - you'll need to implement this based on your API
-    
-    return response;
-  };
+    }
+  );
+
+  return response;
+};
+
 
   useEffect(() => {
     const fetchProfile = async () => {

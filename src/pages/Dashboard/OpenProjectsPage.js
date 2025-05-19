@@ -12,32 +12,36 @@ const OpenProjectsPage = () => {
   const categories = ['All', 'Web Development', 'Mobile Apps', 'AI/ML', 'DevOps', 'Blockchain'];
   
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem('token');
-  
-        const params = {};
-        if (selectedCategory && selectedCategory !== 'All') params.category = selectedCategory;
-        if (searchTerm) params.search = searchTerm;
-  
-        const response = await axios.get('http://localhost:5000/api/projects', {
+  const fetchProjects = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+
+      const params = {};
+      if (selectedCategory && selectedCategory !== 'All') params.category = selectedCategory;
+      if (searchTerm) params.search = searchTerm;
+
+      const response = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/api/projects`,
+        {
           headers: {
             Authorization: `Bearer ${token}`
           },
           params
-        });
-  
-        setProjects(response.data);
-        setLoading(false);
-      } catch (error) {
-        console.error('Failed to fetch projects:', error);
-        setLoading(false);
-      }
-    };
-  
-    fetchProjects();
-  }, [selectedCategory, searchTerm]);
+        }
+      );
+
+      setProjects(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Failed to fetch projects:', error);
+      setLoading(false);
+    }
+  };
+
+  fetchProjects();
+}, [selectedCategory, searchTerm]);
+
 
   return (
     <div className="flex min-h-screen bg-gray-100">

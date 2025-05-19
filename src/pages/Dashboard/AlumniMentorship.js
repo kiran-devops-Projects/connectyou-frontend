@@ -22,7 +22,7 @@ const AlumniMentorship = () => {
 
     console.log("🔍 Mentor ID from token:", mentorId); // <-- Debugging line
 
-    axios.get(`http://localhost:5000/api/mentor/requests/${mentorId}`)
+    axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/mentor/requests/${mentorId}`)
       .then(res => {
         console.log("✅ Fetched mentorship requests:", res.data.requests); // Optional: Log the response
         setRequests(res.data.requests);
@@ -31,7 +31,7 @@ const AlumniMentorship = () => {
   }, []);
 
   const handleAccept = (requestId) => {
-    axios.patch(`http://localhost:5000/api/mentor/accept/${requestId}`)
+    axios.patch(`${process.env.REACT_APP_BACKEND_URL}/api/mentor/accept/${requestId}`)
       .then(() => {
         alert("✅ Request accepted!");
         setRequests(prev => prev.filter(r => r._id !== requestId));

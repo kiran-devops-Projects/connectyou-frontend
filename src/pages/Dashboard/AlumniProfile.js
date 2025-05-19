@@ -28,7 +28,7 @@ const AlumniProfile = () => {
   const getAlumniProfile = async (token) => {
     // You'll need to create a new endpoint on your backend like "api/profile/alumni/:id"
     // For now, we'll use the same endpoint as it returns the profile of the logged-in user
-    const response = await axios.get('http://localhost:5000/api/profile/', {
+    const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/profile/`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response;
@@ -38,7 +38,7 @@ const AlumniProfile = () => {
     // Create a copy that excludes the name field if it's handled separately
     const { name, ...profileDataToSend } = profileData;
     
-    const response = await axios.put('http://localhost:5000/api/profile/updateprofile', profileDataToSend, {
+    const response = await axios.put(`${process.env.REACT_APP_BACKEND_URL}/api/profile/updateprofile`, profileDataToSend, {
       headers: { Authorization: `Bearer ${token}` },
     });
     

@@ -43,7 +43,7 @@ const AlumniEvents = () => {
   const fetchEvents = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/api/events');
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/events`);
       setEvents(response.data);
       
       // Calculate stats
@@ -79,9 +79,9 @@ const AlumniEvents = () => {
 
     try {
       if (isEditing) {
-        await axios.put(`http://localhost:5000/api/events/${editingId}`, formData);
+        await axios.put(`${process.env.REACT_APP_BACKEND_URL}/api/events/${editingId}`, formData);
       } else {
-        await axios.post('http://localhost:5000/api/events', formData);
+        await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/events`, formData);
       }
       
       // Reset form and state
@@ -120,7 +120,7 @@ const AlumniEvents = () => {
   const handleDeleteClick = async (id) => {
     if (deleteConfirm === id) {
       try {
-        await axios.delete(`http://localhost:5000/api/events/${id}`);
+        await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/events/${id}`);
         setDeleteConfirm(null);
         fetchEvents();
       } catch (err) {

@@ -38,7 +38,7 @@ const AlumniProjects = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/projects', {
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/projects`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { category, search }
       });
@@ -60,7 +60,7 @@ const AlumniProjects = () => {
     const token = localStorage.getItem('token');
     try {
       await axios.post(
-        'http://localhost:5000/api/projects',
+        `${process.env.REACT_APP_BACKEND_URL}/api/projects`,
         {
           ...formData,
           tech: formData.tech.split(',').map(t => t.trim()),

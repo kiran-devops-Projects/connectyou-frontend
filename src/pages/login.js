@@ -136,7 +136,7 @@ const Login = () => {
     return isValid;
   }, [validateField]);
 
-  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
   const loginUser = async (userData) => {
     const response = await fetch(`${BACKEND_URL}/api/users/login`, {

@@ -25,7 +25,7 @@ const AlumniJobPostings = () => {
     // Fetch jobs from API
     const fetchJobs = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/jobs/');
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/jobs/`);
         if (response.ok) {
           const data = await response.json();
           setJobs(data);
@@ -59,8 +59,8 @@ const AlumniJobPostings = () => {
   
     try {
       const url = editMode
-        ? `http://localhost:5000/api/jobs/${editJobId}`
-        : 'http://localhost:5000/api/jobs/';
+        ? `${process.env.REACT_APP_BACKEND_URL}/api/jobs/${editJobId}`
+        : `${process.env.REACT_APP_BACKEND_URL}api/jobs/`;
   
       const method = editMode ? 'PUT' : 'POST';
   
@@ -105,7 +105,7 @@ const AlumniJobPostings = () => {
   
   const handleDelete = async (jobId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/jobs/${jobId}`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/jobs/${jobId}`, {
         method: 'DELETE',
       });
 

@@ -59,7 +59,7 @@ const AlumniELearningPage = () => {
     try {
       setIsLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/courses', {
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/courses`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setCourses(response.data);
@@ -131,7 +131,7 @@ const AlumniELearningPage = () => {
       let response;
       if (isEditing && currentCourseId) {
         // Update existing course
-        response = await axios.put(`http://localhost:5000/api/courses/${currentCourseId}`, formDataToSend, {
+        response = await axios.put(`${process.env.REACT_APP_BACKEND_URL}/api/courses/${currentCourseId}`, formDataToSend, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data'
@@ -140,7 +140,7 @@ const AlumniELearningPage = () => {
         setMessage('Course updated successfully!');
       } else {
         // Create new course
-        response = await axios.post('http://localhost:5000/api/courses', formDataToSend, {
+        response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/courses`, formDataToSend, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data'
@@ -414,7 +414,7 @@ const AlumniELearningPage = () => {
                       {course.thumbnail && (
                         <div className="w-full md:w-1/4 mb-4 md:mb-0">
                           <img
-                           src={`http://localhost:5000/${course.thumbnail}`}
+                           src={`${process.env.REACT_APP_BACKEND_URL}/${course.thumbnail}`}
                             alt={course.title}
                             className="w-full h-24 object-cover rounded-md"
                             onError={(e) => {

@@ -6,7 +6,6 @@ import io from 'socket.io-client';
 import Navbar from '../../components/shared/Navbar';
 import { jwtDecode } from 'jwt-decode';
 
-const SOCKET_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
 let socket;
 
 const MessagesPage = () => {
@@ -65,8 +64,8 @@ const MessagesPage = () => {
   useEffect(() => {
     if (!user?.userId) return;
     
-    // const SOCKET_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
-    // console.log('Connecting socket to:', SOCKET_URL);
+    const SOCKET_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/';
+    console.log('Connecting socket to:', SOCKET_URL);
 
     socket = io(SOCKET_URL, {
       transports: ['websocket'],
@@ -174,7 +173,7 @@ const MessagesPage = () => {
       const token = localStorage.getItem('token');
       if (!token) return;
       
-      const response = await axios.get(`${SOCKET_URL}/api/chat/unread-count/${user.userId}`, {
+      const response = await axios.get(`http://localhost:5000/api/chat/unread-count/${user.userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -205,7 +204,7 @@ const MessagesPage = () => {
         return;
       }
       
-      const response = await axios.get(`${SOCKET_URL}/api/chat/chats/${user.userId}`, {
+      const response = await axios.get(`http://localhost:5000/api/chat/chats/${user.userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       console.log('Raw API response:', response.data);
@@ -263,7 +262,7 @@ const MessagesPage = () => {
         return;
       }
       
-      const response = await axios.get(`${SOCKET_URL}/api/chat/messages`, {
+      const response = await axios.get('http://localhost:5000/api/chat/messages', {
         headers: { Authorization: `Bearer ${token}` },
         params: {
           sender: user.userId,
@@ -318,7 +317,7 @@ const MessagesPage = () => {
       const token = localStorage.getItem('token');
       if (!token) return;
       
-      await axios.put(`${SOCKET_URL}/api/chat/mark-read`, {
+      await axios.put('http://localhost:5000/api/chat/mark-read', {
         messageIds
       }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -354,7 +353,7 @@ const MessagesPage = () => {
         return;
       }
       
-      const response = await axios.post(`${SOCKET_URL}/api/chat/send-message`, {
+      const response = await axios.post('http://localhost:5000/api/chat/send-message', {
         sender: user.userId,
         receiver: selectedChat.otherUser._id,
         content: message

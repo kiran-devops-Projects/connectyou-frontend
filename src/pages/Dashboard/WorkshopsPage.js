@@ -5,17 +5,18 @@ import Navbar from '../../components/shared/Navbar';
 const WorkshopsPage = () => {
   const [workshops, setWorkshops] = useState([]);
   
-  useEffect(() => {
-    fetch('http://localhost:5000/api/workshops/')
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => setWorkshops(data))
-      .catch(error => console.error('Error fetching workshops:', error));
-  }, []);
+useEffect(() => {
+  fetch(`${process.env.REACT_APP_BACKEND_URL}/api/workshops/`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => setWorkshops(data))
+    .catch(error => console.error('Error fetching workshops:', error));
+}, []);
+
   
   return (
     <div className="flex min-h-screen bg-gray-100">
