@@ -1,4 +1,4 @@
-import React, { useState, useCallback, memo } from 'react';
+import React, { useState, useCallback, memo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GraduationCap, UserSquare2, ArrowLeft, Loader2, BookOpen, Rocket, Trophy, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -119,9 +119,21 @@ const Signup = memo(({ togglePage }) => {
     branch: '',
     yearOfStudy: '',
     studentId: '',
+    graduationYear: '',
+    currentCompany: '',
+    jobTitle: '',
+    industry: '',
   });
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  const [backendUrl, setBackendUrl] = useState(process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000');
+
+  // Set fallback URL if env variable is missing
+  useEffect(() => {
+    if (!process.env.REACT_APP_BACKEND_URL) {
+      console.warn('WARNING: REACT_APP_BACKEND_URL is not defined. Using fallback URL.');
+    }
+  }, []);
 
   const branches = [
     'Computer Science',
@@ -154,6 +166,11 @@ const Signup = memo(({ togglePage }) => {
       branch: type === 'student' ? '' : prev.branch,
       yearOfStudy: type === 'student' ? '' : prev.yearOfStudy,
       studentId: type === 'student' ? '' : prev.studentId,
+      // Make sure all alumni fields are included too
+      graduationYear: type === 'alumni' ? '' : prev.graduationYear,
+      currentCompany: type === 'alumni' ? '' : prev.currentCompany,
+      jobTitle: type === 'alumni' ? '' : prev.jobTitle,
+      industry: type === 'alumni' ? '' : prev.industry,
     }));
     setStep(1);
   };
@@ -170,7 +187,7 @@ const Signup = memo(({ togglePage }) => {
     }
   }, [touched]);
 
-  const validateField = (name) => {
+  const validateField = useCallback((name) => {
     const newErrors = { ...errors };
     switch (name) {
       case 'firstName':
@@ -200,13 +217,13 @@ const Signup = memo(({ togglePage }) => {
       default:
         if (userType === 'student') {
           if (['university', 'branch', 'yearOfStudy', 'studentId'].includes(name) && !formData[name]) {
-            newErrors[name] = `${name.charAt(0).toUpperCase() + name.slice(1)} is required`;
+            newErrors[name] = `${name.charAt(0).toUpperCase() + name.slice(1).replace(/([A-Z])/g, ' $1').trim()} is required`;
           } else {
             delete newErrors[name];
           }
         } else if (userType === 'alumni') {
           if (['graduationYear', 'currentCompany', 'jobTitle', 'industry'].includes(name) && !formData[name]) {
-            newErrors[name] = `${name.charAt(0).toUpperCase() + name.slice(1)} is required`;
+            newErrors[name] = `${name.charAt(0).toUpperCase() + name.slice(1).replace(/([A-Z])/g, ' $1').trim()} is required`;
           } else {
             delete newErrors[name];
           }
@@ -214,7 +231,7 @@ const Signup = memo(({ togglePage }) => {
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [formData, errors, userType]);
 
   const validateStep = (currentStep) => {
     const fieldsToValidate = currentStep === 1 
@@ -233,40 +250,100 @@ const Signup = memo(({ togglePage }) => {
     fieldsToValidate.forEach(field => {
       if (!validateField(field)) isValid = false;
     });
+    
     return isValid;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
   
-    const formDataWithUserType = { ...formData, userType };
-  
-    if (!validateStep(step)) return;
+    if (!validateStep(step)) {
+      return;
+    }
   
     if (step === 1) {
       setStep(2);
       return;
     }
   
+    // Create payload with proper field structure
+    const formDataWithUserType = { 
+      ...formData, 
+      userType,
+      // Make sure Alumni-specific fields are only included when userType is alumni
+      ...(userType === 'alumni' && {
+        alumni: {
+          graduationYear: formData.graduationYear,
+          currentCompany: formData.currentCompany,
+          jobTitle: formData.jobTitle,
+          industry: formData.industry
+        }
+      }),
+      // Make sure Student-specific fields are only included when userType is student
+      ...(userType === 'student' && {
+        student: {
+          university: formData.university,
+          branch: formData.branch,
+          yearOfStudy: formData.yearOfStudy,
+          studentId: formData.studentId || 'N/A' // Provide fallback if not required
+        }
+      })
+    };
+  
+    // Remove fields that shouldn't be in the root object
+    if (userType === 'student') {
+      delete formDataWithUserType.graduationYear;
+      delete formDataWithUserType.currentCompany;
+      delete formDataWithUserType.jobTitle;
+      delete formDataWithUserType.industry;
+    } else if (userType === 'alumni') {
+      delete formDataWithUserType.university;
+      delete formDataWithUserType.branch;
+      delete formDataWithUserType.yearOfStudy;
+      delete formDataWithUserType.studentId;
+    }
+
+    // Always delete confirmPassword as it shouldn't be sent to backend
+    delete formDataWithUserType.confirmPassword;
+  
     setIsLoading(true);
+    
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users/register`, {
+      const apiUrl = `${backendUrl}/api/users/register`;
+      
+      // Implement fetch with more detailed error handling
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(formDataWithUserType)
       });
+      
+      const responseData = await response.json();
   
       if (!response.ok) {
-        throw new Error('Registration failed. Please try again.');
+        // Display backend error message if available
+        throw new Error(responseData.message || 'Registration failed. Please try again.');
       }
   
-      console.log('Form submitted successfully');
+      console.log('Form submitted successfully', responseData);
       window.alert('User registered successfully');
       navigate('/login');
     } catch (error) {
-      setErrors(prev => ({ ...prev, submit: error.message || 'Registration failed. Please try again.' }));
+      // Check if it's a network error (server down, CORS, etc.)
+      if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+        setErrors(prev => ({ 
+          ...prev, 
+          submit: `Unable to connect to server. Server might be down or CORS might be blocking the request.`
+        }));
+      } else {
+        setErrors(prev => ({ 
+          ...prev, 
+          submit: error.message || 'Registration failed. Please try again.' 
+        }));
+      }
+      
       console.error('Error during submission:', error);
     } finally {
       setIsLoading(false);
@@ -474,7 +551,7 @@ const Signup = memo(({ togglePage }) => {
                             touched={touched.yearOfStudy}
                             options={studyYears}
                           />
-                          {/* <FormField
+                          <FormField
                             label="Student ID"
                             name="studentId"
                             value={formData.studentId}
@@ -482,7 +559,7 @@ const Signup = memo(({ togglePage }) => {
                             onBlur={handleBlur}
                             error={errors.studentId}
                             touched={touched.studentId}
-                          /> */}
+                          />
                         </>
                       ) : (
                         <>
@@ -584,5 +661,7 @@ const Signup = memo(({ togglePage }) => {
     </div>
   );
 });
+
+
 
 export default Signup;
