@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, Loader2, Eye, EyeOff, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { Mail, Lock, Loader2, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { toast, Toaster } from 'react-hot-toast';
 import './login.css';
 
 const containerVariants = {
@@ -43,48 +42,76 @@ const buttonVariants = {
   initial: { scale: 1 },
 };
 
-const FormField = memo(({ label, name, type, value, error, touched, icon: Icon, onChange, onBlur, toggleVisibility, showPassword }) => (
+const FormField = memo(({ label, name, type, value, error, touched, icon: Icon, onChange, onBlur }) => (
   <div className="relative mb-6">
     <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
     <div className="relative">
       <input
-        type={name === 'password' && showPassword ? 'text' : type}
+        type={type}
         name={name}
         value={value}
         onChange={onChange}
         onBlur={onBlur}
-        className={`w-full px-4 py-3 pl-10 ${
-          name === 'password' ? 'pr-10' : ''
-        } rounded-lg border ${error && touched ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500'} focus:ring-2 focus:border-transparent transition-all duration-200`}
+        className={`w-full px-4 py-3 pl-10 rounded-lg border ${
+          error && touched ? 'border-red-500' : 'border-gray-300'
+        } focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200`}
         placeholder={`Enter your ${label.toLowerCase()}`}
       />
       <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-      
-      {name === 'password' && (
-        <button 
-          type="button"
-          onClick={toggleVisibility}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none transition-colors"
-        >
-          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-        </button>
-      )}
     </div>
     <AnimatePresence>
       {error && touched && (
-        <motion.div
+        <motion.p
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className="flex items-center mt-1"
+          className="absolute -bottom-5 left-0 text-sm text-red-600"
         >
-          <AlertTriangle className="w-4 h-4 text-red-500 mr-1" />
-          <p className="text-sm text-red-600">{error}</p>
-        </motion.div>
+          {error}
+        </motion.p>
       )}
     </AnimatePresence>
   </div>
 ));
+
+const PasswordField = ({ label, name, value, error, touched, showPassword, toggleShowPassword, onChange, onBlur }) => (
+  <div className="relative mb-6">
+    <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+    <div className="relative">
+      <input
+        type={showPassword ? 'text' : 'password'}
+        name={name}
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+        className={`w-full px-4 py-3 pl-10 pr-10 rounded-lg border ${
+          error && touched ? 'border-red-500' : 'border-gray-300'
+        } focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200`}
+        placeholder={`Enter your ${label.toLowerCase()}`}
+      />
+      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+      <button
+        type="button"
+        onClick={toggleShowPassword}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+      >
+        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+      </button>
+    </div>
+    <AnimatePresence>
+      {error && touched && (
+        <motion.p
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          className="absolute -bottom-5 left-0 text-sm text-red-600"
+        >
+          {error}
+        </motion.p>
+      )}
+    </AnimatePresence>
+  </div>
+);
 
 const PasswordStrengthIndicator = ({ password }) => {
   const requirements = [
@@ -112,7 +139,7 @@ const PasswordStrengthIndicator = ({ password }) => {
 
 const Login = () => {
   const navigate = useNavigate();
-  const { token } = useParams();
+  const { token } = useParams(); // Get token from URL parameters
   const [currentView, setCurrentView] = useState('login'); // login, forgot, reset
   const [formData, setFormData] = useState({ 
     email: '', 
@@ -127,13 +154,16 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Reset password specific states
   const [isVerifying, setIsVerifying] = useState(false);
   const [tokenValid, setTokenValid] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [resetSuccess, setResetSuccess] = useState(false);
 
-  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
+  // Check if we're on reset password route and verify token
   useEffect(() => {
     if (token) {
       setCurrentView('reset');
@@ -153,13 +183,11 @@ const Login = () => {
       } else {
         setTokenValid(false);
         setErrors({ token: data.message || 'Invalid or expired reset token' });
-        toast.error(data.message || 'Invalid or expired reset token');
       }
     } catch (error) {
       console.error('Token verification error:', error);
       setTokenValid(false);
       setErrors({ token: 'Error verifying reset token. Please try again.' });
-      toast.error('Error verifying reset token. Please try again.');
     } finally {
       setIsVerifying(false);
     }
@@ -170,6 +198,7 @@ const Login = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
     setTouched((prev) => ({ ...prev, [name]: true }));
     
+    // Clear errors when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -182,18 +211,6 @@ const Login = () => {
     const { name } = e.target;
     setTouched((prev) => ({ ...prev, [name]: true }));
     validateField(name);
-  }, []);
-
-  const togglePasswordVisibility = useCallback(() => {
-    setShowPassword(prev => !prev);
-  }, []);
-
-  const toggleNewPasswordVisibility = useCallback(() => {
-    setShowNewPassword(prev => !prev);
-  }, []);
-
-  const toggleConfirmPasswordVisibility = useCallback(() => {
-    setShowConfirmPassword(prev => !prev);
   }, []);
 
   const validateField = useCallback(
@@ -310,10 +327,7 @@ const Login = () => {
   const handleLoginSubmit = useCallback(
     async (e) => {
       e.preventDefault();
-      if (!validateLoginForm()) {
-        toast.error('Please fix the errors in the form');
-        return;
-      }
+      if (!validateLoginForm()) return;
 
       setIsLoading(true);
       try {
@@ -328,18 +342,13 @@ const Login = () => {
           localStorage.setItem('userType', user.role);
           localStorage.setItem('userName', user.name);
 
-          toast.success('Login successful!');
-          
-          setTimeout(() => {
-            const redirectUrl = user.role === 'student' ? '/dashboard' : '/alumni';
-            navigate(redirectUrl);
-          }, 1000);
+          const redirectUrl = user.role === 'student' ? '/dashboard' : '/alumni';
+          navigate(redirectUrl);
         }
       } catch (error) {
         setErrors({
           submit: error.message || 'Login failed. Please try again.',
         });
-        toast.error(error.message || 'Login failed. Please try again.');
       } finally {
         setIsLoading(false);
       }
@@ -351,27 +360,23 @@ const Login = () => {
     if (!formData.email) {
       setErrors({ email: 'Please enter your email to reset the password' });
       setTouched({ email: true });
-      toast.error('Please enter your email to reset the password');
       return;
     }
 
     if (!/\S+@\S+\.\S+/.test(formData.email)) {
       setErrors({ email: 'Invalid email format' });
       setTouched({ email: true });
-      toast.error('Invalid email format');
       return;
     }
 
     setIsLoading(true);
-    setErrors({});
+    setErrors({}); // Clear any existing errors
     
     try {
       await sendForgotPasswordRequest(formData.email);
       setShowResetPassword(true);
-      toast.success('Password reset email sent!');
     } catch (error) {
       setErrors({ submit: error.message || 'Failed to send reset email. Please try again.' });
-      toast.error(error.message || 'Failed to send reset email. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -380,10 +385,7 @@ const Login = () => {
   const handleResetPasswordSubmit = useCallback(
     async (e) => {
       e.preventDefault();
-      if (!validateResetForm()) {
-        toast.error('Please fix the errors in the form');
-        return;
-      }
+      if (!validateResetForm()) return;
 
       setIsLoading(true);
       try {
@@ -392,12 +394,10 @@ const Login = () => {
           confirmPassword: formData.confirmPassword
         });
         setResetSuccess(true);
-        toast.success('Password reset successfully!');
       } catch (error) {
         setErrors({
           submit: error.message || 'Password reset failed. Please try again.',
         });
-        toast.error(error.message || 'Password reset failed. Please try again.');
       } finally {
         setIsLoading(false);
       }
@@ -405,6 +405,7 @@ const Login = () => {
     [formData, validateResetForm, token]
   );
 
+  // Reset password component content
   if (currentView === 'reset') {
     if (isVerifying) {
       return (
@@ -420,7 +421,6 @@ const Login = () => {
               <p className="text-gray-600">Verifying reset token...</p>
             </div>
           </motion.div>
-          <Toaster position="top-right" />
         </div>
       );
     }
@@ -441,7 +441,6 @@ const Login = () => {
               </button>
             </div>
           </motion.div>
-          <Toaster position="top-right" />
         </div>
       );
     }
@@ -462,11 +461,11 @@ const Login = () => {
               </button>
             </div>
           </motion.div>
-          <Toaster position="top-right" />
         </div>
       );
     }
 
+    // Reset password form
     return (
       <div className="form-container">
         <div className="info-section">
@@ -484,82 +483,31 @@ const Login = () => {
             </motion.div>
 
             <motion.form variants={itemVariants} onSubmit={handleResetPasswordSubmit} className="mt-8 space-y-6">
-              <div className="relative mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-                <div className="relative">
-                  <input
-                    type={showNewPassword ? 'text' : 'password'}
-                    name="newPassword"
-                    value={formData.newPassword}
-                    onChange={handleInputChange}
-                    onBlur={handleBlur}
-                    className={`w-full px-4 py-3 pl-10 pr-10 rounded-lg border ${
-                      errors.newPassword && touched.newPassword ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500'
-                    } focus:ring-2 focus:border-transparent transition-all duration-200`}
-                    placeholder="Enter your new password"
-                  />
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <button
-                    type="button"
-                    onClick={toggleNewPasswordVisibility}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none transition-colors"
-                  >
-                    {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-                <AnimatePresence>
-                  {errors.newPassword && touched.newPassword && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="flex items-center mt-1"
-                    >
-                      <AlertTriangle className="w-4 h-4 text-red-500 mr-1" />
-                      <p className="text-sm text-red-600">{errors.newPassword}</p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                {formData.newPassword && <PasswordStrengthIndicator password={formData.newPassword} />}
-              </div>
+              <PasswordField
+                label="New Password"
+                name="newPassword"
+                value={formData.newPassword}
+                error={errors.newPassword}
+                touched={touched.newPassword}
+                showPassword={showNewPassword}
+                toggleShowPassword={() => setShowNewPassword(!showNewPassword)}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+              />
 
-              <div className="relative mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
-                <div className="relative">
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    onBlur={handleBlur}
-                    className={`w-full px-4 py-3 pl-10 pr-10 rounded-lg border ${
-                      errors.confirmPassword && touched.confirmPassword ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500'
-                    } focus:ring-2 focus:border-transparent transition-all duration-200`}
-                    placeholder="Confirm your new password"
-                  />
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <button
-                    type="button"
-                    onClick={toggleConfirmPasswordVisibility}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none transition-colors"
-                  >
-                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-                <AnimatePresence>
-                  {errors.confirmPassword && touched.confirmPassword && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="flex items-center mt-1"
-                    >
-                      <AlertTriangle className="w-4 h-4 text-red-500 mr-1" />
-                      <p className="text-sm text-red-600">{errors.confirmPassword}</p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              {formData.newPassword && <PasswordStrengthIndicator password={formData.newPassword} />}
+
+              <PasswordField
+                label="Confirm New Password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                error={errors.confirmPassword}
+                touched={touched.confirmPassword}
+                showPassword={showConfirmPassword}
+                toggleShowPassword={() => setShowConfirmPassword(!showConfirmPassword)}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+              />
 
               <AnimatePresence>
                 {errors.submit && (
@@ -567,9 +515,8 @@ const Login = () => {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="p-3 bg-red-50 rounded-lg border border-red-100 flex items-center"
+                    className="p-3 bg-red-50 rounded-lg border border-red-100"
                   >
-                    <AlertTriangle className="w-5 h-5 text-red-500 mr-2" />
                     <p className="text-sm text-red-600">{errors.submit}</p>
                   </motion.div>
                 )}
@@ -581,7 +528,7 @@ const Login = () => {
                 whileTap="tap"
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-1"
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform"
               >
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Reset Password</>}
               </motion.button>
@@ -599,11 +546,11 @@ const Login = () => {
             </motion.form>
           </div>
         </motion.div>
-        <Toaster position="top-right" />
       </div>
     );
   }
 
+  // Login component content (rest of your existing login code)
   return (
     <div className="form-container">
       <div className="info-section">
@@ -666,8 +613,6 @@ const Login = () => {
                   icon={Lock}
                   onChange={handleInputChange}
                   onBlur={handleBlur}
-                  toggleVisibility={togglePasswordVisibility}
-                  showPassword={showPassword}
                 />
 
                 <div className="flex items-center justify-end">
@@ -687,9 +632,8 @@ const Login = () => {
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="p-3 bg-red-50 rounded-lg border border-red-100 flex items-center"
+                      className="p-3 bg-red-50 rounded-lg border border-red-100"
                     >
-                      <AlertTriangle className="w-5 h-5 text-red-500 mr-2" />
                       <p className="text-sm text-red-600">{errors.submit}</p>
                     </motion.div>
                   )}
@@ -701,7 +645,7 @@ const Login = () => {
                   whileTap="tap"
                   type="submit"
                   disabled={isLoading}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-1"
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform"
                 >
                   {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Sign In</>}
                 </motion.button>
@@ -715,30 +659,12 @@ const Login = () => {
                   >
                     Sign up
                   </button>
-                </div>a
+                </div>
               </motion.form>
             )}
           </AnimatePresence>
         </div>
       </motion.div>
-      <Toaster position="top-right" toastOptions={{
-        duration: 3000,
-        style: {
-          background: '#363636',
-          color: '#fff',
-          borderRadius: '8px',
-        },
-        success: {
-          style: {
-            background: '#10B981',
-          },
-        },
-        error: {
-          style: {
-            background: '#EF4444',
-          },
-        },
-      }} />
     </div>
   );
 };
