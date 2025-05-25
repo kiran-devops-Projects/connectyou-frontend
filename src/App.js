@@ -6,6 +6,7 @@ import Dashboard from './components/Dashboard';
 import LandingPage from './components/LandingPage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import Navbar from './components/shared/Navbar';
+import ResetPassword from './pages/PasswordResetForm';
 
 // General Pages
 import AIAssistantPage from "./pages/Dashboard/AIAssistantPage";
@@ -83,6 +84,7 @@ const App = () => {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
 
       {/* Student Dashboard with Navbar */}
       <Route path="/dashboard/*" element={<StudentLayout />} />
