@@ -123,7 +123,6 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const [showResetPassword, setShowResetPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -367,8 +366,7 @@ const Login = () => {
     
     try {
       await sendForgotPasswordRequest(formData.email);
-      setShowResetPassword(true);
-      toast.success('Password reset email sent!');
+      toast.success('Password reset email sent! Check your inbox.');
     } catch (error) {
       setErrors({ submit: error.message || 'Failed to send reset email. Please try again.' });
       toast.error(error.message || 'Failed to send reset email. Please try again.');
@@ -620,105 +618,79 @@ const Login = () => {
             <p className="mt-2 text-gray-600">Sign in to continue your journey</p>
           </motion.div>
 
-          <AnimatePresence mode="wait">
-            {showResetPassword ? (
-              <motion.div
-                key="reset"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-                className="text-center space-y-4"
+          <motion.form variants={itemVariants} onSubmit={handleLoginSubmit} className="mt-8 space-y-6">
+            <FormField
+              label="Email Address"
+              name="email"
+              type="email"
+              value={formData.email}
+              error={errors.email}
+              touched={touched.email}
+              icon={Mail}
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+            />
+            <FormField
+              label="Password"
+              name="password"
+              type="password"
+              value={formData.password}
+              error={errors.password}
+              touched={touched.password}
+              icon={Lock}
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+              toggleVisibility={togglePasswordVisibility}
+              showPassword={showPassword}
+            />
+
+            <div className="flex items-center justify-end">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={isLoading}
+                className="text-sm text-indigo-600 hover:text-indigo-700 font-medium hover:underline transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <div className="p-4 bg-green-50 rounded-lg border border-green-100">
-                  <p className="text-green-800">
-                    If an account with that email exists, a password reset link has been sent to {formData.email}. 
-                    Please check your inbox and spam folder.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowResetPassword(false)}
-                  className="text-indigo-600 hover:text-indigo-700 font-medium hover:underline transition-colors"
+                Forgot password?
+              </button>
+            </div>
+
+            <AnimatePresence>
+              {errors.submit && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="p-3 bg-red-50 rounded-lg border border-red-100 flex items-center"
                 >
-                  Back to login
-                </button>
-              </motion.div>
-            ) : (
-              <motion.form key="login" variants={itemVariants} onSubmit={handleLoginSubmit} className="mt-8 space-y-6">
-                <FormField
-                  label="Email Address"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  error={errors.email}
-                  touched={touched.email}
-                  icon={Mail}
-                  onChange={handleInputChange}
-                  onBlur={handleBlur}
-                />
-                <FormField
-                  label="Password"
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  error={errors.password}
-                  touched={touched.password}
-                  icon={Lock}
-                  onChange={handleInputChange}
-                  onBlur={handleBlur}
-                  toggleVisibility={togglePasswordVisibility}
-                  showPassword={showPassword}
-                />
+                  <AlertTriangle className="w-5 h-5 text-red-500 mr-2" />
+                  <p className="text-sm text-red-600">{errors.submit}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-                <div className="flex items-center justify-end">
-                  <button
-                    type="button"
-                    onClick={handleForgotPassword}
-                    disabled={isLoading}
-                    className="text-sm text-indigo-600 hover:text-indigo-700 font-medium hover:underline transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Forgot password?
-                  </button>
-                </div>
+            <motion.button
+              variants={buttonVariants}
+              whileHover="hover"
+              whileTap="tap"
+              type="submit"
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-1"
+            >
+              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Sign In</>}
+            </motion.button>
 
-                <AnimatePresence>
-                  {errors.submit && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="p-3 bg-red-50 rounded-lg border border-red-100 flex items-center"
-                    >
-                      <AlertTriangle className="w-5 h-5 text-red-500 mr-2" />
-                      <p className="text-sm text-red-600">{errors.submit}</p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <motion.button
-                  variants={buttonVariants}
-                  whileHover="hover"
-                  whileTap="tap"
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-1"
-                >
-                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Sign In</>}
-                </motion.button>
-
-                <div className="text-center text-sm text-gray-600 mt-4">
-                  Don't have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => navigate('/signup')}
-                    className="text-indigo-600 hover:text-indigo-700 font-medium hover:underline transition-colors"
-                  >
-                    Sign up
-                  </button>
-                </div>a
-              </motion.form>
-            )}
-          </AnimatePresence>
+            <div className="text-center text-sm text-gray-600 mt-4">
+              Don't have an account?{' '}
+              <button
+                type="button"
+                onClick={() => navigate('/signup')}
+                className="text-indigo-600 hover:text-indigo-700 font-medium hover:underline transition-colors"
+              >
+                Sign up
+              </button>
+            </div>
+          </motion.form>
         </div>
       </motion.div>
       <Toaster position="top-right" toastOptions={{
