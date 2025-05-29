@@ -104,7 +104,7 @@ const JobApplicationModal = ({ job, isOpen, onClose, onSubmit }) => {
       submitData.append('coverLetter', formData.coverLetter);
       submitData.append('resume', resumeFile);
       
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/applications/submit`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/application/submit`, {
         method: 'POST',
         body: submitData
       });

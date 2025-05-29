@@ -72,7 +72,7 @@ const AlumniJobPostings = () => {
           const applicationsData = {};
           for (const job of data) {
             try {
-              const appResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/applications/job/${job._id}`);
+              const appResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/application/job/${job._id}`);
               if (appResponse.ok) {
                 const jobApplications = await appResponse.json();
                 applicationsData[job._id] = jobApplications;
@@ -183,7 +183,7 @@ const AlumniJobPostings = () => {
     setShowApplicationsModal(true);
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/applications/job/${jobId}`);
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/application/job/${jobId}`);
       if (response.ok) {
         const jobApplications = await response.json();
         setSelectedJobApplications(jobApplications);
@@ -200,7 +200,7 @@ const AlumniJobPostings = () => {
 
   const updateApplicationStatus = async (applicationId, newStatus) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/applications/${applicationId}/status`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/application/${applicationId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -230,7 +230,7 @@ const AlumniJobPostings = () => {
 
   const downloadResume = async (applicationId, applicantName) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/applications/resume/${applicationId}`);
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/application/resume/${applicationId}`);
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
