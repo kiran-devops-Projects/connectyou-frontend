@@ -59,40 +59,66 @@ const AlumniJobPostings = () => {
   const [expandedJobId, setExpandedJobId] = useState(null);
   const [loadingApplications, setLoadingApplications] = useState(false);
 
-  useEffect(() => {
-    const fetchJobs = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/jobs/`);
-        if (response.ok) {
-          const data = await response.json();
-          setJobs(data);
+
+useEffect(() => {
+  const fetchJobs = async () => {
+    console.log("Fetching jobs...");
+    setIsLoading(true);
+    try {
+      const jobsUrl = `${process.env.REACT_APP_BACKEND_URL}/api/jobs/`;
+      
+
+      const response = await fetch(jobsUrl);
+      
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        setJobs(data);
+
+        // Fetch applications for each job
+        const applicationsData = {};
+        for (const job of data) {
+          const appUrl = `${process.env.REACT_APP_BACKEND_URL}/api/application/job/${job._id}`;
           
-          // Fetch applications for each job
-          const applicationsData = {};
-          for (const job of data) {
-            try {
-              const appResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/application/job/${job._id}`);
-              if (appResponse.ok) {
-                const jobApplications = await appResponse.json();
-                applicationsData[job._id] = jobApplications;
-              }
-            } catch (error) {
-              console.error(`Error fetching applications for job ${job._id}:`, error);
+          try {
+            const appResponse = await fetch(appUrl);
+            
+
+            if (appResponse.ok) {
+              const jobApplicationsResponse = await appResponse.json();
+              
+              
+              // Extract the applications array from the response object
+              const jobApplications = jobApplicationsResponse.applications || [];
+              
+              
+              applicationsData[job._id] = jobApplications;
+            } else {
+              
               applicationsData[job._id] = [];
             }
+          } catch (error) {
+            
+            applicationsData[job._id] = [];
           }
-          setApplications(applicationsData);
         }
-      } catch (error) {
-        console.error('Error fetching jobs:', error);
-      } finally {
-        setIsLoading(false);
+        
+        setApplications(applicationsData);
+      } else {
+        console.error('Failed to fetch jobs. Status:', response.status);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching jobs:', error);
+    } finally {
+      setIsLoading(false);
+      
+    }
+  };
 
-    fetchJobs();
-  }, []);
+  fetchJobs();
+}, []);
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -177,56 +203,110 @@ const AlumniJobPostings = () => {
     }
   };
 
-  const viewApplications = async (jobId) => {
-    setLoadingApplications(true);
-    setSelectedJobId(jobId);
-    setShowApplicationsModal(true);
+// Also update the viewApplications function
+const viewApplications = async (jobId) => {
+  setLoadingApplications(true);
+  setSelectedJobId(jobId);
+  setShowApplicationsModal(true);
+  
+  try {
+    const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/application/job/${jobId}`);
+    if (response.ok) {
+      const jobApplicationsResponse = await response.json();
+      
+      
+      // Extract the applications array from the response
+      const jobApplications = jobApplicationsResponse.applications || [];
+      
+      
+      setSelectedJobApplications(jobApplications);
+      // Update applications state
+      setApplications(prev => ({ ...prev, [jobId]: jobApplications }));
+    }
+  } catch (error) {
+    console.error('Error fetching applications:', error);
+    setSelectedJobApplications([]);
+  } finally {
+    setLoadingApplications(false);
+  }
+};
+
+// Fixed updateApplicationStatus function
+const updateApplicationStatus = async (applicationId, newStatus) => {
+  try {
+    console.log(`Updating application ${applicationId} to status: ${newStatus}`);
     
-    try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/application/job/${jobId}`);
-      if (response.ok) {
-        const jobApplications = await response.json();
-        setSelectedJobApplications(jobApplications);
-        // Update applications state
-        setApplications(prev => ({ ...prev, [jobId]: jobApplications }));
-      }
-    } catch (error) {
-      console.error('Error fetching applications:', error);
-      setSelectedJobApplications([]);
-    } finally {
-      setLoadingApplications(false);
-    }
-  };
+    const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/application/${applicationId}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status: newStatus }),
+    });
 
-  const updateApplicationStatus = async (applicationId, newStatus) => {
-    try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/application/${applicationId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
+    console.log('Update response status:', response.status);
 
-      if (response.ok) {
-        const updatedApplication = await response.json();
-        // Update the selected job applications
-        setSelectedJobApplications(prev => 
-          prev.map(app => app._id === applicationId ? updatedApplication : app)
-        );
-        
-        // Update the main applications state
-        setApplications(prev => ({
-          ...prev,
-          [selectedJobId]: prev[selectedJobId].map(app => 
-            app._id === applicationId ? updatedApplication : app
-          )
-        }));
+    if (response.ok) {
+      const responseData = await response.json();
+     
+      // Handle different possible response structures
+      let updatedApplication;
+      
+      // If the response is the updated application directly
+      if (responseData._id) {
+        updatedApplication = responseData;
       }
-    } catch (error) {
-      console.error('Error updating application status:', error);
+      // If the response has an 'application' or 'data' property
+      else if (responseData.application) {
+        updatedApplication = responseData.application;
+      }
+      else if (responseData.data) {
+        updatedApplication = responseData.data;
+      }
+      // If it's just a success message, find and update the existing application
+      else {
+        // Find the current application and update its status
+        const currentApp = selectedJobApplications.find(app => app._id === applicationId);
+        if (currentApp) {
+          updatedApplication = { ...currentApp, status: newStatus };
+        } else {
+          console.error('Could not find application to update');
+          return;
+        }
+      }
+
+      
+
+      // Ensure the updated application has all required fields
+      if (!updatedApplication._id) {
+        console.error('Updated application missing _id field');
+        return;
+      }
+
+      // Update the selected job applications
+      setSelectedJobApplications(prev => 
+        prev.map(app => 
+          app._id === applicationId ? { ...app, ...updatedApplication } : app
+        )
+      );
+      
+      // Update the main applications state
+      setApplications(prev => ({
+        ...prev,
+        [selectedJobId]: prev[selectedJobId] ? prev[selectedJobId].map(app => 
+          app._id === applicationId ? { ...app, ...updatedApplication } : app
+        ) : []
+      }));
+
+      console.log('Application status updated successfully');
+    } else {
+      const errorText = await response.text();
+      console.error('Failed to update application status:', response.status, errorText);
     }
-  };
+  } catch (error) {
+    console.error('Error updating application status:', error);
+  }
+};
 
   const downloadResume = async (applicationId, applicantName) => {
     try {
@@ -722,126 +802,152 @@ const AlumniJobPostings = () => {
         )}
 
         {/* Applications Modal */}
-        <AnimatePresence>
-          {showApplicationsModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+<AnimatePresence>
+  {showApplicationsModal && (
+    <motion.div
+      key="applications-modal-backdrop"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      onClick={() => setShowApplicationsModal(false)}
+    >
+      <motion.div
+        key="applications-modal-content"
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        className="bg-white rounded-xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden"
+        onClick={(e) => e.stopPropagation()} // Prevent backdrop click
+      >
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold text-gray-800">
+              Applications for {getSelectedJobTitle()}
+            </h2>
+            <button
               onClick={() => setShowApplicationsModal(false)}
+              className="p-2 hover:bg-gray-100 rounded-full"
             >
+              <X size={24} />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6 max-h-[70vh] overflow-y-auto">
+          {loadingApplications ? (
+            <div className="flex justify-center items-center h-32">
               <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="bg-white rounded-xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="p-6 border-b border-gray-200">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-gray-800">
-                      Applications for {getSelectedJobTitle()}
-                    </h2>
-                    <button
-                      onClick={() => setShowApplicationsModal(false)}
-                      className="p-2 hover:bg-gray-100 rounded-full"
-                    >
-                      <X size={24} />
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="p-6 max-h-[70vh] overflow-y-auto">
-                  {loadingApplications ? (
-                    <div className="flex justify-center items-center h-32">
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full"
-                      />
-                    </div>
-                  ) : selectedJobApplications.length > 0 ? (
-                    <div className="space-y-4">
-                      {selectedJobApplications.map((application) => (
-                        <div key={application._id} className="border border-gray-200 rounded-lg p-4">
-                          <div className="flex flex-col md:flex-row md:items-center justify-between">
-                            <div className="flex items-start space-x-4">
-                              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                                <User className="w-6 h-6 text-blue-600" />
-                              </div>
-                              <div>
-                                <h3 className="font-semibold text-lg">{application.name}</h3>
-                                <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mt-1">
-                                  <div className="flex items-center">
-                                    <Mail className="w-4 h-4 mr-1" />
-                                    <span>{application.email}</span>
-                                  </div>
-                                  {application.phone && (
-                                    <div className="flex items-center">
-                                      <Phone className="w-4 h-4 mr-1" />
-                                      <span>{application.phone}</span>
-                                    </div>
-                                  )}
-                                  <div className="flex items-center">
-                                    <Calendar className="w-4 h-4 mr-1" />
-                                    <span>Applied {new Date(application.createdAt).toLocaleDateString()}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center space-x-2 mt-4 md:mt-0">
-                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(application.status)}`}>
-                                {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
-                              </span>
-                              
-                              <select
-                                value={application.status}
-                                onChange={(e) => updateApplicationStatus(application._id, e.target.value)}
-                                className="ml-2 px-3 py-1 border border-gray-300 rounded-md text-sm"
-                              >
-                                <option value="pending">Pending</option>
-                                <option value="shortlisted">Shortlisted</option>
-                                <option value="interview">Interview</option>
-                                <option value="hired">Hired</option>
-                                <option value="rejected">Rejected</option>
-                              </select>
-                              
-                              <button
-                                onClick={() => downloadResume(application._id, application.name)}
-                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-full"
-                                title="Download Resume"
-                              >
-                                <Download size={18} />
-                              </button>
-                            </div>
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full"
+              />
+            </div>
+          ) : selectedJobApplications.length > 0 ? (
+            <div className="space-y-4">
+              {selectedJobApplications.map((application) => (
+                <div
+                  key={application._id}
+                  className="border border-gray-200 rounded-lg p-4"
+                >
+                  <div className="flex flex-col md:flex-row md:items-center justify-between">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <User className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-lg">
+                          {application.name}
+                        </h3>
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mt-1">
+                          <div className="flex items-center">
+                            <Mail className="w-4 h-4 mr-1" />
+                            <span>{application.email}</span>
                           </div>
-                          
-                          {application.coverLetter && (
-                            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                              <h4 className="font-medium text-gray-800 mb-2 flex items-center">
-                                <MessageSquare className="w-4 h-4 mr-1" />
-                                Cover Letter
-                              </h4>
-                              <p className="text-gray-600 text-sm">{application.coverLetter}</p>
+                          {application.phone && (
+                            <div className="flex items-center">
+                              <Phone className="w-4 h-4 mr-1" />
+                              <span>{application.phone}</span>
                             </div>
                           )}
+                          <div className="flex items-center">
+                            <Calendar className="w-4 h-4 mr-1" />
+                            <span>
+                              Applied{" "}
+                              {new Date(application.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
                         </div>
-                      ))}
+                      </div>
                     </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                      <h3 className="text-lg font-medium text-gray-700 mb-2">No Applications Yet</h3>
-                      <p className="text-gray-500">This job hasn't received any applications yet.</p>
+
+                    <div className="flex items-center space-x-2 mt-4 md:mt-0">
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
+                          application.status
+                        )}`}
+                      >
+                        {application.status.charAt(0).toUpperCase() +
+                          application.status.slice(1)}
+                      </span>
+
+                      <select
+                        value={application.status}
+                        onChange={(e) =>
+                          updateApplicationStatus(application._id, e.target.value)
+                        }
+                        className="ml-2 px-3 py-1 border border-gray-300 rounded-md text-sm"
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="shortlisted">Shortlisted</option>
+                        <option value="interview">Interview</option>
+                        <option value="hired">Hired</option>
+                        <option value="rejected">Rejected</option>
+                      </select>
+
+                      <button
+                        onClick={() =>
+                          downloadResume(application._id, application.name)
+                        }
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-full"
+                        title="Download Resume"
+                      >
+                        <Download size={18} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {application.coverLetter && (
+                    <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                      <h4 className="font-medium text-gray-800 mb-2 flex items-center">
+                        <MessageSquare className="w-4 h-4 mr-1" />
+                        Cover Letter
+                      </h4>
+                      <p className="text-gray-600 text-sm">
+                        {application.coverLetter}
+                      </p>
                     </div>
                   )}
                 </div>
-              </motion.div>
-            </motion.div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-700 mb-2">
+                No Applications Yet
+              </h3>
+              <p className="text-gray-500">
+                This job hasn't received any applications yet.
+              </p>
+            </div>
           )}
-        </AnimatePresence>
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
 
         {/* Tooltips - MISSING PART */}
         <Tooltip id="view-tooltip" />
