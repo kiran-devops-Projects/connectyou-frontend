@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, useAnimation, useInView, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Play, ChevronLeft, ChevronRight, Star, Users, BookOpen, Trophy, Sparkles, Mail, Linkedin, Twitter, Github } from 'lucide-react';
+import { ArrowRight, Play, ChevronLeft, ChevronRight, Star, Users, BookOpen, Trophy, Sparkles, Mail, Linkedin, Twitter, Github, Briefcase } from 'lucide-react';
 import { TypeAnimation } from 'react-type-animation';
 import Header from './Header';
 import Footer from './Footer';
@@ -22,49 +22,61 @@ const AnimatedLandingPage = () => {
   const [showLegalPages, setShowLegalPages] = useState(false);
   const [legalPageType, setLegalPageType] = useState('terms');
 
-  // Add these functions after your existing functions
   const handleShowTerms = () => {
     setLegalPageType('terms');
     setShowLegalPages(true);
-    window.scrollTo(0, 0); // Scroll to top
+    window.scrollTo(0, 0);
   };
 
   const handleShowPrivacy = () => {
     setLegalPageType('privacy');
     setShowLegalPages(true);
-    window.scrollTo(0, 0); // Scroll to top
+    window.scrollTo(0, 0);
   };
 
   const handleCloseLegalPages = () => {
     setShowLegalPages(false);
   };
 
-  // Slideshow data
+  // Updated slides with alumni-student connection images
   const slides = [
     {
       title: "Connect with Alumni",
-      subtitle: "Bridge the gap between students and professionals",
-      image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+      subtitle: "Bridge the gap between students and professionals through our AI-powered mentorship matching",
+      image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
       gradient: "from-blue-600 to-purple-700"
     },
     {
-      title: "Unlock Career Opportunities",
-      subtitle: "Get mentorship from successful alumni",
-      image: "https://images.unsplash.com/photo-1553484771-371a605b060b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+      title: "Career Opportunities",
+      subtitle: "Get access to exclusive job postings and internships from alumni networks",
+      image: "https://images.unsplash.com/photo-1521791136064-7986c2920216?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
       gradient: "from-purple-600 to-pink-700"
     },
     {
-      title: "Build Your Network",
-      subtitle: "Create lasting connections for your future",
-      image: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+      title: "Lifelong Connections",
+      subtitle: "Create meaningful relationships that last beyond your university years",
+      image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
       gradient: "from-pink-600 to-orange-700"
     }
   ];
 
+  // Updated testimonials from the report context
   const testimonials = [
-    { name: "Sarah Johnson", role: "Software Engineer at Google", quote: "ConnectYou helped me land my dream job through alumni connections!" },
-    { name: "Michael Chen", role: "Product Manager at Meta", quote: "The mentorship I received was invaluable for my career growth." },
-    { name: "Emily Davis", role: "Data Scientist at Netflix", quote: "Amazing platform that truly bridges students with industry professionals." }
+    { 
+      name: "Sarah Johnson", 
+      role: "Software Engineer at Google", 
+      quote: "ConnectYou's mentorship program helped me transition smoothly from campus to corporate life. The guidance I received from alumni was invaluable!" 
+    },
+    { 
+      name: "Michael Chen", 
+      role: "Product Manager at Meta", 
+      quote: "As an alumnus, I love giving back to my alma mater. The platform makes it so easy to connect with talented students and offer career advice." 
+    },
+    { 
+      name: "Emily Davis", 
+      role: "Data Scientist at Netflix", 
+      quote: "Through ConnectYou, I found my dream internship that turned into a full-time offer. The alumni network is incredibly supportive." 
+    }
   ];
 
   useEffect(() => {
@@ -175,7 +187,6 @@ const AnimatedLandingPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 overflow-hidden">
       {showLegalPages ? (
-        // Show legal pages with back functionality
         <div>
           <FooterPages 
             initialPage={legalPageType}
@@ -183,7 +194,6 @@ const AnimatedLandingPage = () => {
           />
         </div>
       ) : (
-        // Show your existing landing page content
         <>
           {/* Header */}
           <Header />
@@ -300,15 +310,6 @@ const AnimatedLandingPage = () => {
                   >
                     Explore Platform
                   </motion.button>
-                  <motion.button 
-                    className="border-2 border-white text-white px-8 py-4 rounded-full font-semibold hover:bg-white hover:text-gray-900 transition-all duration-300 flex items-center justify-center gap-2"
-                    variants={textVariants}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Play className="w-5 h-5" />
-                    Watch Demo
-                  </motion.button>
                 </motion.div>
               </motion.div>
             </div>
@@ -348,9 +349,9 @@ const AnimatedLandingPage = () => {
               >
                 {[
                   { number: '10K+', label: 'Alumni Connected' },
-                  { number: '5K+', label: 'Students Mentored' },
-                  { number: '2K+', label: 'Success Stories' },
-                  { number: '95%', label: 'Satisfaction Rate' }
+                  { number: '5K+', label: 'Mentorship Sessions' },
+                  { number: '2K+', label: 'Job Opportunities' },
+                  { number: '95%', label: 'User Satisfaction' }
                 ].map((stat, index) => (
                   <motion.div
                     key={index}
@@ -406,9 +407,8 @@ const AnimatedLandingPage = () => {
               }
             }}
           >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <Overview />
-            </div>
+            
+                
           </motion.section>
 
           {/* Features Section */}
@@ -464,24 +464,24 @@ const AnimatedLandingPage = () => {
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {[
                   {
-                    title: "Alumni Network",
-                    description: "Access to thousands of alumni across various industries",
-                    icon: <Users className="w-8 h-8" />
+                    title: "AI-Powered Matching",
+                    description: "Our intelligent algorithm connects students with the most relevant alumni mentors based on skills, interests, and career goals",
+                    icon: <Sparkles className="w-8 h-8" />
                   },
                   {
-                    title: "Mentorship",
-                    description: "Get guidance from experienced professionals",
-                    icon: <BookOpen className="w-8 h-8" />
+                    title: "Secure Messaging",
+                    description: "End-to-end encrypted communication for private mentorship conversations",
+                    icon: <Mail className="w-8 h-8" />
                   },
                   {
-                    title: "Career Growth",
-                    description: "Discover opportunities to advance your career",
+                    title: "Job Board",
+                    description: "Exclusive access to job and internship opportunities posted by alumni",
                     icon: <Trophy className="w-8 h-8" />
                   },
                   {
-                    title: "Exclusive Events",
-                    description: "Attend networking events and workshops",
-                    icon: <Sparkles className="w-8 h-8" />
+                    title: "Event Management",
+                    description: "Virtual and in-person events to facilitate networking and knowledge sharing",
+                    icon: <Users className="w-8 h-8" />
                   }
                 ].map((feature, index) => (
                   <motion.div
@@ -553,9 +553,9 @@ const AnimatedLandingPage = () => {
             </div>
           </motion.section>
 
-          {/* Testimonials Carousel */}
-          <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-700 relative overflow-hidden">
-            <div className="absolute inset-0 bg-black/10" />
+          {/* Why Choose ConnectYou Section */}
+          <section className="py-20 bg-white relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-purple-50 opacity-50" />
             <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <motion.div 
                 className="text-center mb-16"
@@ -564,16 +564,16 @@ const AnimatedLandingPage = () => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.6 }}
               >
-                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                  Success Stories
+                <h2 className="text-4xl md:text-5xl font-bold mb-6">
+                  Why Choose <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">ConnectYou</span>?
                 </h2>
-                <p className="text-xl text-blue-100 max-w-3xl mx-auto">
-                  Hear from our community members who achieved their dreams
+                <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                  Our innovative platform transforms alumni-student engagement with cutting-edge technology
                 </p>
               </motion.div>
               
               <motion.div 
-                className="grid md:grid-cols-3 gap-8"
+                className="grid md:grid-cols-2 gap-12"
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true }}
@@ -587,32 +587,74 @@ const AnimatedLandingPage = () => {
                   }
                 }}
               >
-                {testimonials.map((testimonial, index) => (
-                  <motion.div
-                    key={index}
-                    className="bg-white/10 backdrop-blur-sm p-8 rounded-2xl border border-white/20 hover:bg-white/20 transition-all duration-500"
-                    variants={fadeInVariants}
-                    whileHover={{ y: -10 }}
-                  >
-                    <div className="flex items-center mb-4">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
-                      ))}
-                    </div>
-                    <blockquote className="text-white mb-6 text-lg italic">
-                      "{testimonial.quote}"
-                    </blockquote>
-                    <div>
-                      <div className="font-semibold text-white">{testimonial.name}</div>
-                      <div className="text-blue-200 text-sm">{testimonial.role}</div>
-                    </div>
-                  </motion.div>
-                ))}
+                {/* Left column - Main description */}
+                <motion.div
+                  variants={fadeInVariants}
+                  className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100"
+                >
+                  <motion.p className="text-gray-700 mb-6 leading-relaxed">
+                    ConnectYou is an innovative, digital platform designed to enable and transform alumni-student engagement in universities. We replace fragmented and manual systems with a robust, single destination that utilizes innovative technology, including artificial intelligence, cloud services, and secure authentication.
+                  </motion.p>
+                  
+                  <motion.p className="text-gray-700 mb-6 leading-relaxed">
+                    Our platform features an AI-powered mentorship matching engine that connects students and alumni based on educational background, skills, interests, and career aspirations, creating meaningful connections between them.
+                  </motion.p>
+                  
+                  <motion.p className="text-gray-700 leading-relaxed">
+                    With a fully end-to-end encrypted messaging system, users can communicate in real-time while maintaining privacy and safety. Our built-in jobs and internships module allows opportunities to be posted directly from alumni and industry professionals, with one-click applications and streamlined applicant review.
+                  </motion.p>
+                </motion.div>
+                
+                {/* Right column - Feature cards */}
+                <motion.div className="space-y-6">
+                  {[
+                    {
+                      title: "AI-Powered Matching",
+                      description: "Our intelligent algorithm connects students with the most relevant alumni mentors",
+                      icon: <Sparkles className="w-6 h-6 text-purple-600" />,
+                      delay: 0
+                    },
+                    {
+                      title: "Secure Communication",
+                      description: "End-to-end encrypted messaging system for private and safe interactions",
+                      icon: <Mail className="w-6 h-6 text-blue-600" />,
+                      delay: 0.1
+                    },
+                    {
+                      title: "Streamlined Job Opportunities",
+                      description: "One-click applications for positions posted by alumni and professionals",
+                      icon: <Briefcase className="w-6 h-6 text-pink-600" />,
+                      delay: 0.2
+                    },
+                    {
+                      title: "Scalable & Flexible",
+                      description: "Designed to support many concurrent users across multiple institutions",
+                      icon: <Users className="w-6 h-6 text-indigo-600" />,
+                      delay: 0.3
+                    }
+                  ].map((feature, index) => (
+                    <motion.div
+                      key={index}
+                      className="bg-white p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300"
+                      variants={fadeInVariants}
+                      custom={feature.delay}
+                      whileHover={{ y: -5 }}
+                    >
+                      <div className="flex items-center mb-4">
+                        <div className="p-2 rounded-lg bg-gray-50">
+                          {feature.icon}
+                        </div>
+                        <h3 className="ml-4 text-xl font-semibold">{feature.title}</h3>
+                      </div>
+                      <p className="text-gray-600">{feature.description}</p>
+                    </motion.div>
+                  ))}
+                </motion.div>
               </motion.div>
             </div>
           </section>
 
-          {/* Interactive CTA Section */}
+          {/* Final CTA Section */}
           <section className="py-20 bg-white relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50" />
             <div className="relative max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
@@ -625,7 +667,7 @@ const AnimatedLandingPage = () => {
               >
                 Ready to 
                 <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent"> Transform</span>
-                <br />Your Future?
+                <br />Your Career?
               </motion.h2>
               <motion.p 
                 className="text-xl text-gray-600 mb-12"
@@ -634,10 +676,10 @@ const AnimatedLandingPage = () => {
                 viewport={{ once: true }}
                 transition={{ delay: 0.2, duration: 0.6 }}
               >
-                Join thousands of students and alumni already building meaningful connections
+                Join our growing community of students and alumni building meaningful connections
               </motion.p>
               <motion.div 
-                className="flex flex-col sm:flex-row gap-6 justify-center"
+                className="flex justify-center"
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true }}
@@ -646,8 +688,7 @@ const AnimatedLandingPage = () => {
                   visible: {
                     opacity: 1,
                     transition: {
-                      staggerChildren: 0.1,
-                      delayChildren: 0.4
+                      delay: 0.4
                     }
                   }
                 }}
@@ -661,22 +702,14 @@ const AnimatedLandingPage = () => {
                   }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  Start Connecting
+                  Get Started Now
                   <ArrowRight className="w-5 h-5" />
-                </motion.button>
-                <motion.button 
-                  className="border-2 border-gray-300 text-gray-700 px-12 py-4 rounded-full text-lg font-semibold hover:border-blue-600 hover:text-blue-600 hover:scale-105 transition-all duration-300"
-                  variants={textVariants}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Learn More
                 </motion.button>
               </motion.div>
             </div>
           </section>
 
-          {/* Footer - Pass the handlers */}
+          {/* Footer */}
           <Footer 
             onTermsClick={handleShowTerms}
             onPrivacyClick={handleShowPrivacy}

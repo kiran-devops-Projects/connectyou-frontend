@@ -7,6 +7,8 @@ import LandingPage from './components/LandingPage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import Navbar from './components/shared/Navbar';
 import ResetPassword from './pages/PasswordResetForm';
+import AboutUs from './components/AboutUs';
+import Blog from './components/Blog';
 
 // General Pages
 import AIAssistantPage from "./pages/Dashboard/AIAssistantPage";
@@ -85,6 +87,8 @@ const App = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
+      <Route path="/about" element={<AboutUs />} />
+      <Route path="/blog" element={<Blog />} />
 
       {/* Student Dashboard with Navbar */}
       <Route path="/dashboard/*" element={<StudentLayout />} />

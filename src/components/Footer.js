@@ -37,7 +37,11 @@ const Footer = ({ onTermsClick, onPrivacyClick }) => {
   const footerSections = [
     {
       title: "Company",
-      links: ["About Us", "Careers", "Press", "Blog"],
+      links: ["About Us", "Blog"],
+      handlers: [
+        () => navigate("/about"),
+        () => navigate("/blog")
+      ]
     },
     {
       title: "Resources",
