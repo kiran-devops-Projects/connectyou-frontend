@@ -1,12 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, DollarSign, Clock, Building, Search, Bookmark, ExternalLink } from 'lucide-react';
+import { MapPin, DollarSign, Clock, Building, Search, Bookmark, ExternalLink, CheckCircle } from 'lucide-react';
 import Navbar from '../../components/shared/Navbar';
+import JobApplicationModal from './JobApplicationModal';
 
 const JobsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('All');
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [savedJobs, setSavedJobs] = useState(new Set());
+  const [appliedJobs, setAppliedJobs] = useState(new Set());
+  
+  // Modal state
+  const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [applicationSuccess, setApplicationSuccess] = useState(false);
 
   const jobTypes = ['All', 'Full-time', 'Part-time', 'Internship', 'Contract'];
 
@@ -16,6 +24,13 @@ const JobsPage = () => {
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/jobs`);
         const data = await response.json();
         setJobs(data);
+        
+        // Load saved jobs from localStorage (or you could fetch from backend)
+        const saved = JSON.parse(localStorage.getItem('savedJobs') || '[]');
+        setSavedJobs(new Set(saved));
+        
+        const applied = JSON.parse(localStorage.getItem('appliedJobs') || '[]');
+        setAppliedJobs(new Set(applied));
       } catch (error) {
         console.error('Error fetching job data:', error);
       } finally {
@@ -31,6 +46,37 @@ const JobsPage = () => {
     (job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.company.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const handleApplyClick = (job) => {
+    setSelectedJob(job);
+    setShowApplicationModal(true);
+  };
+
+  const handleApplicationSubmit = (result) => {
+    console.log('Application submitted:', result);
+    setApplicationSuccess(true);
+    
+    // Add to applied jobs
+    const newAppliedJobs = new Set([...appliedJobs, selectedJob._id]);
+    setAppliedJobs(newAppliedJobs);
+    localStorage.setItem('appliedJobs', JSON.stringify([...newAppliedJobs]));
+    
+    // Show success message
+    setTimeout(() => {
+      setApplicationSuccess(false);
+    }, 3000);
+  };
+
+  const handleSaveJob = (jobId) => {
+    const newSavedJobs = new Set(savedJobs);
+    if (savedJobs.has(jobId)) {
+      newSavedJobs.delete(jobId);
+    } else {
+      newSavedJobs.add(jobId);
+    }
+    setSavedJobs(newSavedJobs);
+    localStorage.setItem('savedJobs', JSON.stringify([...newSavedJobs]));
+  };
 
   // Enhanced loading state
   if (loading) {
@@ -70,6 +116,14 @@ const JobsPage = () => {
       <div className="flex-1 ml-64 md:ml-64 sm:ml-64">
         <div className="w-full bg-gradient-to-br from-indigo-50 via-purple-50 to-blue-50">
           <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+            {/* Success Message */}
+            {applicationSuccess && (
+              <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center">
+                <CheckCircle className="w-5 h-5 mr-2" />
+                <span>Application submitted successfully! We'll be in touch soon.</span>
+              </div>
+            )}
+
             {/* Header */}
             <div className="mb-6 sm:mb-8">
               <h1 className="text-2xl sm:text-3xl font-bold mb-2">Jobs & Internships</h1>
@@ -119,11 +173,15 @@ const JobsPage = () => {
             {filteredJobs.length > 0 ? (
               <div className="space-y-4">
                 {filteredJobs.map(job => (
-                  <div key={job.id} className="bg-white rounded-lg shadow-md p-4 sm:p-6 hover:shadow-lg transition-shadow">
+                  <div key={job._id} className="bg-white rounded-lg shadow-md p-4 sm:p-6 hover:shadow-lg transition-shadow">
                     <div className="flex flex-col sm:flex-row sm:items-start gap-4">
                       <div className="flex-shrink-0 mx-auto sm:mx-0">
                         <div className="bg-gray-50 p-2 rounded-lg flex items-center justify-center">
-                          <img src={job.logo} alt={job.company} className="w-12 h-12 rounded-lg object-contain" />
+                          {job.logo ? (
+                            <img src={job.logo} alt={job.company} className="w-12 h-12 rounded-lg object-contain" />
+                          ) : (
+                            <Building className="w-12 h-12 text-gray-400" />
+                          )}
                         </div>
                       </div>
                       
@@ -152,14 +210,47 @@ const JobsPage = () => {
                           </div>
                         </div>
 
+                        {/* Job Description Preview */}
+                        {job.description && (
+                          <div className="mb-4">
+                            <p className="text-gray-600 text-sm line-clamp-2">
+                              {job.description.length > 150 
+                                ? `${job.description.substring(0, 150)}...` 
+                                : job.description
+                              }
+                            </p>
+                          </div>
+                        )}
+
                         <div className="flex gap-2 justify-center sm:justify-start">
-                          <button className="flex items-center bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">
-                            <ExternalLink className="w-4 h-4 mr-2" />
-                            <span>Apply Now</span>
-                          </button>
-                          <button className="flex items-center border border-purple-600 text-purple-600 py-2 px-4 rounded-lg hover:bg-purple-50 transition-colors">
-                            <Bookmark className="w-4 h-4 mr-2" />
-                            <span>Save Job</span>
+                          {appliedJobs.has(job._id) ? (
+                            <button 
+                              disabled
+                              className="flex items-center bg-green-100 text-green-700 py-2 px-4 rounded-lg cursor-not-allowed"
+                            >
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              <span>Applied</span>
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => handleApplyClick(job)}
+                              className="flex items-center bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors"
+                            >
+                              <ExternalLink className="w-4 h-4 mr-2" />
+                              <span>Apply Now</span>
+                            </button>
+                          )}
+                          
+                          <button 
+                            onClick={() => handleSaveJob(job._id)}
+                            className={`flex items-center py-2 px-4 rounded-lg transition-colors ${
+                              savedJobs.has(job._id)
+                                ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                                : 'border border-purple-600 text-purple-600 hover:bg-purple-50'
+                            }`}
+                          >
+                            <Bookmark className={`w-4 h-4 mr-2 ${savedJobs.has(job._id) ? 'fill-current' : ''}`} />
+                            <span>{savedJobs.has(job._id) ? 'Saved' : 'Save Job'}</span>
                           </button>
                         </div>
                       </div>
@@ -181,6 +272,17 @@ const JobsPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Job Application Modal */}
+      <JobApplicationModal
+        job={selectedJob}
+        isOpen={showApplicationModal}
+        onClose={() => {
+          setShowApplicationModal(false);
+          setSelectedJob(null);
+        }}
+        onSubmit={handleApplicationSubmit}
+      />
     </div>
   );
 };

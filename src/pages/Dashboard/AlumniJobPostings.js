@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from '../../components/shared/Navbar';
-import { Briefcase, Building2, MapPin, Clock, X, Edit2, Trash2, ArrowUp, BarChart2, Users, Calendar, CheckCircle } from 'lucide-react';
+import { 
+  Briefcase, Building2, MapPin, Clock, X, Edit2, Trash2, ArrowUp, 
+  BarChart2, Users, Calendar, CheckCircle, Eye, Download, User,
+  Mail, Phone, FileText, Star, MessageSquare
+} from 'lucide-react';
 import { Tooltip } from 'react-tooltip';
 
 const cardVariants = {
@@ -34,6 +38,10 @@ const statsVariants = {
 const AlumniJobPostings = () => {
   const [showForm, setShowForm] = useState(false);
   const [jobs, setJobs] = useState([]);
+  const [applications, setApplications] = useState({});
+  const [selectedJobApplications, setSelectedJobApplications] = useState([]);
+  const [showApplicationsModal, setShowApplicationsModal] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     company: '',
@@ -49,6 +57,7 @@ const AlumniJobPostings = () => {
   const [editJobId, setEditJobId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedJobId, setExpandedJobId] = useState(null);
+  const [loadingApplications, setLoadingApplications] = useState(false);
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -58,6 +67,22 @@ const AlumniJobPostings = () => {
         if (response.ok) {
           const data = await response.json();
           setJobs(data);
+          
+          // Fetch applications for each job
+          const applicationsData = {};
+          for (const job of data) {
+            try {
+              const appResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/applications/job/${job._id}`);
+              if (appResponse.ok) {
+                const jobApplications = await appResponse.json();
+                applicationsData[job._id] = jobApplications;
+              }
+            } catch (error) {
+              console.error(`Error fetching applications for job ${job._id}:`, error);
+              applicationsData[job._id] = [];
+            }
+          }
+          setApplications(applicationsData);
         }
       } catch (error) {
         console.error('Error fetching jobs:', error);
@@ -107,6 +132,8 @@ const AlumniJobPostings = () => {
           setJobs(jobs.map((job) => (job._id === editJobId ? updatedJob : job)));
         } else {
           setJobs([updatedJob, ...jobs]);
+          // Initialize empty applications array for new job
+          setApplications(prev => ({ ...prev, [updatedJob._id]: [] }));
         }
   
         setFormData({
@@ -129,6 +156,10 @@ const AlumniJobPostings = () => {
   };
   
   const handleDelete = async (jobId) => {
+    if (!window.confirm('Are you sure you want to delete this job posting? This action cannot be undone.')) {
+      return;
+    }
+
     try {
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/jobs/${jobId}`, {
         method: 'DELETE',
@@ -136,17 +167,92 @@ const AlumniJobPostings = () => {
 
       if (response.ok) {
         setJobs(jobs.filter(job => job._id !== jobId));
+        // Remove applications for deleted job
+        const newApplications = { ...applications };
+        delete newApplications[jobId];
+        setApplications(newApplications);
       }
     } catch (error) {
       console.error('Error deleting job:', error);
     }
   };
 
+  const viewApplications = async (jobId) => {
+    setLoadingApplications(true);
+    setSelectedJobId(jobId);
+    setShowApplicationsModal(true);
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/applications/job/${jobId}`);
+      if (response.ok) {
+        const jobApplications = await response.json();
+        setSelectedJobApplications(jobApplications);
+        // Update applications state
+        setApplications(prev => ({ ...prev, [jobId]: jobApplications }));
+      }
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+      setSelectedJobApplications([]);
+    } finally {
+      setLoadingApplications(false);
+    }
+  };
+
+  const updateApplicationStatus = async (applicationId, newStatus) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/applications/${applicationId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        const updatedApplication = await response.json();
+        // Update the selected job applications
+        setSelectedJobApplications(prev => 
+          prev.map(app => app._id === applicationId ? updatedApplication : app)
+        );
+        
+        // Update the main applications state
+        setApplications(prev => ({
+          ...prev,
+          [selectedJobId]: prev[selectedJobId].map(app => 
+            app._id === applicationId ? updatedApplication : app
+          )
+        }));
+      }
+    } catch (error) {
+      console.error('Error updating application status:', error);
+    }
+  };
+
+  const downloadResume = async (applicationId, applicantName) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/applications/resume/${applicationId}`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${applicantName}_Resume.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Error downloading resume:', error);
+    }
+  };
+
   const calculateApplicationStats = () => {
-    const total = jobs.reduce((sum, job) => sum + (job.applications || 0), 0);
-    const shortlisted = Math.floor(total * 0.3);
-    const interviews = Math.floor(total * 0.1);
-    const hired = Math.floor(total * 0.05);
+    const allApplications = Object.values(applications).flat();
+    const total = allApplications.length;
+    const shortlisted = allApplications.filter(app => app.status === 'shortlisted').length;
+    const interviews = allApplications.filter(app => app.status === 'interview').length;
+    const hired = allApplications.filter(app => app.status === 'hired').length;
     
     return {
       total,
@@ -157,10 +263,26 @@ const AlumniJobPostings = () => {
     };
   };
 
-  const applications = calculateApplicationStats();
+  const stats = calculateApplicationStats();
 
   const toggleJobExpand = (jobId) => {
     setExpandedJobId(expandedJobId === jobId ? null : jobId);
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'shortlisted': return 'bg-blue-100 text-blue-800';
+      case 'interview': return 'bg-purple-100 text-purple-800';
+      case 'hired': return 'bg-green-100 text-green-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getSelectedJobTitle = () => {
+    const job = jobs.find(j => j._id === selectedJobId);
+    return job ? job.title : 'Job Applications';
   };
 
   return (
@@ -192,9 +314,9 @@ const AlumniJobPostings = () => {
         >
           {[
             { icon: <Briefcase className="w-6 h-6" />, value: jobs.length, label: "Active Jobs", color: "bg-blue-100 text-blue-600" },
-            { icon: <Users className="w-6 h-6" />, value: applications.total, label: "Total Applications", color: "bg-green-100 text-green-600" },
-            { icon: <CheckCircle className="w-6 h-6" />, value: applications.shortlisted, label: "Shortlisted", color: "bg-purple-100 text-purple-600" },
-            { icon: <BarChart2 className="w-6 h-6" />, value: applications.avgPerJob, label: "Avg. per Job", color: "bg-amber-100 text-amber-600" }
+            { icon: <Users className="w-6 h-6" />, value: stats.total, label: "Total Applications", color: "bg-green-100 text-green-600" },
+            { icon: <CheckCircle className="w-6 h-6" />, value: stats.shortlisted, label: "Shortlisted", color: "bg-purple-100 text-purple-600" },
+            { icon: <BarChart2 className="w-6 h-6" />, value: stats.avgPerJob, label: "Avg. per Job", color: "bg-amber-100 text-amber-600" }
           ].map((stat, i) => (
             <motion.div
               key={stat.label}
@@ -468,6 +590,16 @@ const AlumniJobPostings = () => {
                         <motion.button 
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
+                          className="p-2 text-green-600 hover:bg-green-50 rounded-full"
+                          onClick={() => viewApplications(job._id)}
+                          data-tooltip-id="view-tooltip"
+                          data-tooltip-content="View Applications"
+                        >
+                          <Eye size={18} />
+                        </motion.button>
+                        <motion.button 
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-full"
                           onClick={() => {
                             setFormData(job);
@@ -511,9 +643,9 @@ const AlumniJobPostings = () => {
                         <Clock className="w-4 h-4 mr-1" />
                         <span>Posted {job.posted}</span>
                       </div>
-                      {job.applications > 0 && (
+                      {applications[job._id] && applications[job._id].length > 0 && (
                         <div className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-full">
-                          {job.applications} application{job.applications !== 1 ? 's' : ''}
+                          {applications[job._id].length} application{applications[job._id].length !== 1 ? 's' : ''}
                         </div>
                       )}
                     </div>
@@ -535,19 +667,29 @@ const AlumniJobPostings = () => {
                           </p>
                         </div>
                         <div className="mt-6">
-                          <h4 className="font-semibold text-gray-800 mb-2">Application Details</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <h4 className="font-semibold text-gray-800 mb-2">Application Statistics</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div className="bg-blue-50 p-3 rounded-lg">
                               <p className="text-sm text-blue-600">Total Applications</p>
-                              <p className="text-xl font-bold">{job.applications || 0}</p>
+                              <p className="text-xl font-bold">{applications[job._id]?.length || 0}</p>
                             </div>
                             <div className="bg-purple-50 p-3 rounded-lg">
                               <p className="text-sm text-purple-600">Shortlisted</p>
-                              <p className="text-xl font-bold">{Math.floor((job.applications || 0) * 0.3)}</p>
+                              <p className="text-xl font-bold">
+                                {applications[job._id]?.filter(app => app.status === 'shortlisted').length || 0}
+                              </p>
                             </div>
                             <div className="bg-green-50 p-3 rounded-lg">
                               <p className="text-sm text-green-600">Interviews</p>
-                              <p className="text-xl font-bold">{Math.floor((job.applications || 0) * 0.1)}</p>
+                              <p className="text-xl font-bold">
+                                {applications[job._id]?.filter(app => app.status === 'interview').length || 0}
+                              </p>
+                            </div>
+                            <div className="bg-amber-50 p-3 rounded-lg">
+                              <p className="text-sm text-amber-600">Hired</p>
+                              <p className="text-xl font-bold">
+                                {applications[job._id]?.filter(app => app.status === 'hired').length || 0}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -579,9 +721,133 @@ const AlumniJobPostings = () => {
           </motion.div>
         )}
 
-        <Tooltip id="edit-tooltip" place="top" effect="solid" />
-        <Tooltip id="delete-tooltip" place="top" effect="solid" />
-        <Tooltip id="expand-tooltip" place="top" effect="solid" />
+        {/* Applications Modal */}
+        <AnimatePresence>
+          {showApplicationsModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+              onClick={() => setShowApplicationsModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="bg-white rounded-xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="p-6 border-b border-gray-200">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-2xl font-bold text-gray-800">
+                      Applications for {getSelectedJobTitle()}
+                    </h2>
+                    <button
+                      onClick={() => setShowApplicationsModal(false)}
+                      className="p-2 hover:bg-gray-100 rounded-full"
+                    >
+                      <X size={24} />
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="p-6 max-h-[70vh] overflow-y-auto">
+                  {loadingApplications ? (
+                    <div className="flex justify-center items-center h-32">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full"
+                      />
+                    </div>
+                  ) : selectedJobApplications.length > 0 ? (
+                    <div className="space-y-4">
+                      {selectedJobApplications.map((application) => (
+                        <div key={application._id} className="border border-gray-200 rounded-lg p-4">
+                          <div className="flex flex-col md:flex-row md:items-center justify-between">
+                            <div className="flex items-start space-x-4">
+                              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                <User className="w-6 h-6 text-blue-600" />
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-lg">{application.name}</h3>
+                                <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mt-1">
+                                  <div className="flex items-center">
+                                    <Mail className="w-4 h-4 mr-1" />
+                                    <span>{application.email}</span>
+                                  </div>
+                                  {application.phone && (
+                                    <div className="flex items-center">
+                                      <Phone className="w-4 h-4 mr-1" />
+                                      <span>{application.phone}</span>
+                                    </div>
+                                  )}
+                                  <div className="flex items-center">
+                                    <Calendar className="w-4 h-4 mr-1" />
+                                    <span>Applied {new Date(application.createdAt).toLocaleDateString()}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center space-x-2 mt-4 md:mt-0">
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(application.status)}`}>
+                                {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+                              </span>
+                              
+                              <select
+                                value={application.status}
+                                onChange={(e) => updateApplicationStatus(application._id, e.target.value)}
+                                className="ml-2 px-3 py-1 border border-gray-300 rounded-md text-sm"
+                              >
+                                <option value="pending">Pending</option>
+                                <option value="shortlisted">Shortlisted</option>
+                                <option value="interview">Interview</option>
+                                <option value="hired">Hired</option>
+                                <option value="rejected">Rejected</option>
+                              </select>
+                              
+                              <button
+                                onClick={() => downloadResume(application._id, application.name)}
+                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-full"
+                                title="Download Resume"
+                              >
+                                <Download size={18} />
+                              </button>
+                            </div>
+                          </div>
+                          
+                          {application.coverLetter && (
+                            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                              <h4 className="font-medium text-gray-800 mb-2 flex items-center">
+                                <MessageSquare className="w-4 h-4 mr-1" />
+                                Cover Letter
+                              </h4>
+                              <p className="text-gray-600 text-sm">{application.coverLetter}</p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                      <h3 className="text-lg font-medium text-gray-700 mb-2">No Applications Yet</h3>
+                      <p className="text-gray-500">This job hasn't received any applications yet.</p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Tooltips - MISSING PART */}
+        <Tooltip id="view-tooltip" />
+        <Tooltip id="edit-tooltip" />
+        <Tooltip id="delete-tooltip" />
+        <Tooltip id="expand-tooltip" />
       </main>
     </div>
   );
