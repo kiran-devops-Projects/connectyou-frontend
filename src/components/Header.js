@@ -52,9 +52,7 @@ const Header = () => {
           {/* Desktop Menu */}
           <div className="desktop-menu">
             <ul className="nav-links">
-              <li><a href="#features" className="nav-link">Features</a></li>
-              <li><a href="#alumni" className="nav-link">Alumni</a></li>
-              <li><a href="#resources" className="nav-link">Resources</a></li>
+              {/* <li><a href="#features" className="nav-link">Features</a></li> */}
             </ul>
             <div className="auth-buttons">
               <motion.button
@@ -96,8 +94,6 @@ const Header = () => {
         >
           <ul className="mobile-nav-links">
             <li><a href="#features" className="mobile-nav-link" onClick={() => setIsOpen(false)}>Features</a></li>
-            <li><a href="#alumni" className="mobile-nav-link" onClick={() => setIsOpen(false)}>Alumni</a></li>
-            <li><a href="#resources" className="mobile-nav-link" onClick={() => setIsOpen(false)}>Resources</a></li>
           </ul>
           <div className="mobile-auth-buttons">
             <button

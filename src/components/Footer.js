@@ -1,10 +1,9 @@
-
 import React from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { GraduationCap, Mail, Phone, MapPin, ExternalLink, Twitter, Linkedin, Facebook } from "lucide-react";
 
-const Footer = () => {
+const Footer = ({ onTermsClick, onPrivacyClick }) => {
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
 
@@ -42,13 +41,14 @@ const Footer = () => {
     },
     {
       title: "Resources",
-      links: ["Documentation", "Help Center", "Privacy Policy", "Terms of Service"],
+      links: ["Help Center", "Privacy Policy", "Terms of Service"],
+      handlers: [null, onPrivacyClick, onTermsClick] // ADD HANDLERS
     },
     {
       title: "Contact",
       items: [
-        { icon: <Mail className="h-5 w-5" />, text: "contact@connectyou.com" },
-        { icon: <Phone className="h-5 w-5" />, text: "+91 9999999999" },
+        { icon: <Mail className="h-5 w-5" />, text: "connectyou83@gmail.com" },
+        { icon: <Phone className="h-5 w-5" />, text: "+91 9392479356" },
         { icon: <MapPin className="h-5 w-5" />, text: "LPU, Punjab" },
       ],
     },
@@ -77,21 +77,21 @@ const Footer = () => {
             </p>
             <div className="flex space-x-4 mt-6">
               <motion.a 
-                href="#" 
+                href="https://x.com/ConnectYou81937" 
                 whileHover={{ y: -3 }}
                 className="bg-white bg-opacity-20 p-2 rounded-full hover:bg-opacity-30 transition-all"
               >
                 <Twitter className="h-5 w-5" />
               </motion.a>
               <motion.a 
-                href="#" 
+                href="https://www.facebook.com/share/19AR6K9oTq/" 
                 whileHover={{ y: -3 }}
                 className="bg-white bg-opacity-20 p-2 rounded-full hover:bg-opacity-30 transition-all"
               >
                 <Facebook className="h-5 w-5" />
               </motion.a>
               <motion.a 
-                href="#" 
+                href="https://www.linkedin.com/in/connect-you-865a3b365/" 
                 whileHover={{ y: -3 }}
                 className="bg-white bg-opacity-20 p-2 rounded-full hover:bg-opacity-30 transition-all"
               >
@@ -120,8 +120,14 @@ const Footer = () => {
                       <li key={linkIndex}>
                         <motion.a
                           href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (section.handlers && section.handlers[linkIndex]) {
+                              section.handlers[linkIndex]();
+                            }
+                          }}
                           whileHover={{ x: 5 }}
-                          className="text-gray-200 hover:text-white transition-colors flex items-center"
+                          className="text-gray-200 hover:text-white transition-colors flex items-center cursor-pointer"
                         >
                           <span className="mr-2 text-sm">→</span>
                           {link}
