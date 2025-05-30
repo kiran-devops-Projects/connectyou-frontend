@@ -251,7 +251,7 @@ const AboutUs = () => {
       university: "LPU", 
       year: "2025",
       location: "Andhra Pradesh",
-      image: "https://i.ibb.co/cX1hNLnT/image.jpg",
+      image: "https://i.ibb.co/tdd8s0t/image.jpg",
       email: "puttasaikumarreddy143@gmail.com"
     },
     {
@@ -264,7 +264,7 @@ const AboutUs = () => {
       email: "bonenimahendrayadav@gmail.com"
     },
     {
-      name: "Vishnu Vardhan Reddy",
+      name: "Vishnu Vardhan",
       role: "Student",
       university: "LPU",
       year: "2025",
