@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, useAnimation, useInView, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Play, ChevronLeft, ChevronRight, Star, Users, BookOpen, Trophy, Sparkles, Mail, Linkedin, Twitter, Github, Briefcase } from 'lucide-react';
+import { ArrowRight, Play, ChevronLeft, ChevronRight, Star, Users, BookOpen, Trophy, Sparkles, Mail, Linkedin, Twitter, Github, Briefcase, Laptop } from 'lucide-react';
 import { TypeAnimation } from 'react-type-animation';
 import Header from './Header';
 import Footer from './Footer';
@@ -463,11 +463,12 @@ const AnimatedLandingPage = () => {
               {/* Enhanced Features Grid */}
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {[
-                  {
-                    title: "AI-Powered Matching",
-                    description: "Our intelligent algorithm connects students with the most relevant alumni mentors based on skills, interests, and career goals",
-                    icon: <Sparkles className="w-8 h-8" />
-                  },
+                 {
+                  title: "Real-Time Collaboration Hub",
+                  description: "Empower students and alumni to co-create through live project boards, shared workspaces, and integrated task tracking for mentorship-driven innovation.",
+                  icon: <Laptop className="w-8 h-8" />
+                },
+                
                   {
                     title: "Secure Messaging",
                     description: "End-to-end encrypted communication for private mentorship conversations",
@@ -609,11 +610,12 @@ const AnimatedLandingPage = () => {
                 <motion.div className="space-y-6">
                   {[
                     {
-                      title: "AI-Powered Matching",
-                      description: "Our intelligent algorithm connects students with the most relevant alumni mentors",
-                      icon: <Sparkles className="w-6 h-6 text-purple-600" />,
+                      title: "Mentorship Circles",
+                      description: "Join or create themed mentorship groups where alumni guide small cohorts of students through discussions, resources, and goal-based learning.",
+                      icon: <Users className="w-6 h-6 text-indigo-600" />,
                       delay: 0
                     },
+                    
                     {
                       title: "Secure Communication",
                       description: "End-to-end encrypted messaging system for private and safe interactions",

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
+import Navbar from '../../components/shared/Navbar';
 import {
   User,
   MapPin,
@@ -22,8 +23,25 @@ const AlumniProfile = () => {
   const [error, setError] = useState(null);
   const [newSkill, setNewSkill] = useState('');
   const [userName, setUserName] = useState('');
+  const [sidebarWidth, setSidebarWidth] = useState(240);
   const navigate = useNavigate();
   const { alumniId } = useParams(); // In case you're using route params for specific alumni
+
+  // Add event listener for sidebar toggle
+  useEffect(() => {
+    const handleSidebarToggle = (e) => {
+      if (e.detail.isCollapsed) {
+        setSidebarWidth(72);
+      } else {
+        setSidebarWidth(240);
+      }
+    };
+
+    window.addEventListener('sidebarToggle', handleSidebarToggle);
+    return () => {
+      window.removeEventListener('sidebarToggle', handleSidebarToggle);
+    };
+  }, []);
 
   const getAlumniProfile = async (token) => {
     // You'll need to create a new endpoint on your backend like "api/profile/alumni/:id"
@@ -276,58 +294,65 @@ const AlumniProfile = () => {
   const displayName = userName || 'Alumni';
 
   return (
-    <motion.div className="max-w-4xl mx-auto py-8 px-4">
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="relative h-32 bg-gradient-to-r from-purple-500 to-blue-500">
-          {isEditing && (
-            <button
-              onClick={handleSave}
-              className="absolute top-4 right-4 bg-white text-purple-600 p-2 rounded-full shadow-md hover:bg-purple-50 transition-colors"
-              disabled={loading}
-            >
-              <Save className="w-5 h-5" />
-            </button>
-          )}
-        </div>
+    <div className="flex h-screen bg-gray-50">
+      
+      <motion.div 
+        className="flex-1 overflow-auto"
+        style={{ marginLeft: `${sidebarWidth}px` }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      >
+        <motion.div className="max-w-4xl mx-auto py-8 px-4 md:px-8">
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div className="relative h-32 bg-gradient-to-r from-purple-500 to-blue-500">
+              {isEditing && (
+                <button
+                  onClick={handleSave}
+                  className="absolute top-4 right-4 bg-white text-purple-600 p-2 rounded-full shadow-md hover:bg-purple-50 transition-colors"
+                  disabled={loading}
+                >
+                  <Save className="w-5 h-5" />
+                </button>
+              )}
+            </div>
 
-        <div className="relative px-6 pb-6">
-          <div className="flex flex-col items-center -mt-16">
-            <motion.div className="w-32 h-32 bg-purple-200 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
-              <User className="w-16 h-16 text-purple-600" />
-            </motion.div>
+            <div className="relative px-4 md:px-6 pb-6">
+              <div className="flex flex-col items-center -mt-16">
+                <motion.div className="w-32 h-32 bg-purple-200 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
+                  <User className="w-16 h-16 text-purple-600" />
+                </motion.div>
 
-            <motion.div className="mt-4 text-center">
-              <h1 className="text-3xl font-bold text-gray-800">
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={userName}
-                    onChange={(e) => setUserName(e.target.value)}
-                    className="text-center border-b-2 focus:outline-none focus:border-purple-500"
-                  />
-                ) : (
-                  displayName
-                )}
-              </h1>
-              <p className="text-gray-600 mt-1">{profile.title || 'Alumni'}</p>
-              <p className="flex items-center justify-center text-gray-500 mt-1">
-                <MapPin className="w-4 h-4 mr-1" />
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={editedProfile?.location || ''}
-                    onChange={(e) =>
-                      setEditedProfile({ ...editedProfile, location: e.target.value })
-                    }
-                    className="text-center border-b-2 focus:outline-none focus:border-purple-500"
-                    placeholder="Location"
-                  />
-                ) : (
-                  profile.location
-                )}
-              </p>
-            </motion.div>
-          </div>
+                <motion.div className="mt-4 text-center">
+                  <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={userName}
+                        onChange={(e) => setUserName(e.target.value)}
+                        className="text-center border-b-2 focus:outline-none focus:border-purple-500"
+                      />
+                    ) : (
+                      displayName
+                    )}
+                  </h1>
+                  <p className="text-gray-600 mt-1">{profile.title || 'Alumni'}</p>
+                  <p className="flex items-center justify-center text-gray-500 mt-1">
+                    <MapPin className="w-4 h-4 mr-1" />
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editedProfile?.location || ''}
+                        onChange={(e) =>
+                          setEditedProfile({ ...editedProfile, location: e.target.value })
+                        }
+                        className="text-center border-b-2 focus:outline-none focus:border-purple-500"
+                        placeholder="Location"
+                      />
+                    ) : (
+                      profile.location
+                    )}
+                  </p>
+                </motion.div>
+              </div>
 
           <div className="mt-8">
             <h3 className="text-xl font-semibold mb-2">About Me</h3>
@@ -631,7 +656,9 @@ const AlumniProfile = () => {
           </motion.button>
         </div>
       </div>
-    </motion.div>
+        </motion.div>
+      </motion.div>
+    </div>
   );
 };
 
