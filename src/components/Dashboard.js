@@ -299,10 +299,10 @@ const Dashboard = () => {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
           >
             {[
-              { icon: BookOpen, label: 'Courses Completed', value: stats.coursesCompleted, color: 'purple', bgColor: 'bg-purple-100', iconColor: 'text-purple-600' },
-              { icon: Calendar, label: 'Events Attended', value: stats.eventsAttended, color: 'blue', bgColor: 'bg-blue-100', iconColor: 'text-blue-600' },
-              { icon: Briefcase, label: 'Jobs Applied', value: stats.jobsApplied, color: 'green', bgColor: 'bg-green-100', iconColor: 'text-green-600' },
-              { icon: Users, label: 'Mentor Sessions', value: stats.mentorSessions, color: 'amber', bgColor: 'bg-amber-100', iconColor: 'text-amber-600' }
+              { icon: BookOpen, label: 'Courses Completed', value: '0', color: 'purple', bgColor: 'bg-purple-100', iconColor: 'text-purple-600' },
+              { icon: Calendar, label: 'Events Attended', value: '0', color: 'blue', bgColor: 'bg-blue-100', iconColor: 'text-blue-600' },
+              { icon: Briefcase, label: 'Jobs Applied', value: '0', color: 'green', bgColor: 'bg-green-100', iconColor: 'text-green-600' },
+              { icon: Users, label: 'Mentor Sessions', value: '0', color: 'amber', bgColor: 'bg-amber-100', iconColor: 'text-amber-600' }
             ].map((stat, index) => (
               <motion.div 
                 key={index}

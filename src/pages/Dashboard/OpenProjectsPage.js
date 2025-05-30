@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, GitBranch, Star, Clock, Tag } from 'lucide-react';
+import { Search, GitBranch, Star, Clock, Tag, Rocket } from 'lucide-react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Navbar from '../../components/shared/Navbar';
 
 const OpenProjectsPage = () => {
@@ -8,40 +11,124 @@ const OpenProjectsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   const categories = ['All', 'Web Development', 'Mobile Apps', 'AI/ML', 'DevOps', 'Blockchain'];
   
   useEffect(() => {
-  const fetchProjects = async () => {
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('token');
+
+        const params = {};
+        if (selectedCategory && selectedCategory !== 'All') params.category = selectedCategory;
+        if (searchTerm) params.search = searchTerm;
+
+        const response = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL}/api/projects`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            },
+            params
+          }
+        );
+
+        setProjects(response.data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Failed to fetch projects:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, [selectedCategory, searchTerm]);
+
+  const handleViewProject = (projectId) => {
+    navigate(`/projects/${projectId}`);
+  };
+
+  const handleStartProject = async (project) => {
     try {
-      setLoading(true);
       const token = localStorage.getItem('token');
-
-      const params = {};
-      if (selectedCategory && selectedCategory !== 'All') params.category = selectedCategory;
-      if (searchTerm) params.search = searchTerm;
-
-      const response = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/projects`,
+      await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/api/projects/${project._id}/start`,
+        {},
         {
           headers: {
             Authorization: `Bearer ${token}`
-          },
-          params
+          }
+        }
+      );
+      
+      // Custom toast with project maintainer info
+      toast.success(
+        <div className="p-2">
+          <div className="flex items-start">
+            <Rocket className="text-purple-600 mr-3 mt-1 flex-shrink-0" />
+            <div>
+              <h4 className="font-bold text-lg mb-1">Project Initiated Successfully!</h4>
+              <p className="text-gray-700">
+                {project.maintainer ? (
+                  <>
+                    <span className="font-medium">{project.maintainer.name}</span>, the alumni maintainer, 
+                    will contact you within 24-48 hours to guide you through the project.
+                  </>
+                ) : (
+                  "The project alumni will contact you within 24-48 hours to guide you through the project."
+                )}
+              </p>
+              {project.maintainer?.email && (
+                <p className="mt-2 text-sm text-gray-600">
+                  <span className="font-medium">Direct contact:</span> {project.maintainer.email}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>,
+        {
+          position: "top-right",
+          autoClose: 10000, // 10 seconds
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          className: 'border-l-4 border-purple-500 bg-white text-gray-800 shadow-lg',
         }
       );
 
-      setProjects(response.data);
-      setLoading(false);
+      // Update the project stats in the UI if needed
+      setProjects(projects.map(p => {
+        if (p._id === project._id) {
+          return {
+            ...p,
+            participants: (p.participants || 0) + 1
+          };
+        }
+        return p;
+      }));
     } catch (error) {
-      console.error('Failed to fetch projects:', error);
-      setLoading(false);
+      console.error('Failed to start project:', error);
+      toast.error(
+        <div className="p-2">
+          <h4 className="font-bold text-lg mb-1">Couldn't Initiate Project</h4>
+          <p className="text-gray-700">Please try again later or contact support</p>
+        </div>,
+        {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        }
+      );
     }
   };
-
-  fetchProjects();
-}, [selectedCategory, searchTerm]);
-
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -168,11 +255,18 @@ const OpenProjectsPage = () => {
                         </div>
 
                         <div className="mt-4 flex gap-2">
-                          <button className="bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">
+                          <button 
+                            onClick={() => handleViewProject(project._id)}
+                            className="bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors"
+                          >
                             View Project
                           </button>
-                          <button className="border border-purple-600 text-purple-600 py-2 px-4 rounded-lg hover:bg-purple-50 transition-colors">
-                            Star Project
+                          <button 
+                            onClick={() => handleStartProject(project)}
+                            className="flex items-center bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors"
+                          >
+                            <Rocket className="w-4 h-4 mr-1" />
+                            Start Project
                           </button>
                         </div>
                       </div>

@@ -7,7 +7,8 @@ import {
   Search,
   Calendar,
   Bookmark,
-  User
+  User,
+  CheckCircle
 } from 'lucide-react';
 import Navbar from '../../components/shared/Navbar';
 
@@ -81,9 +82,42 @@ const Badge = ({ children, variant = 'default', className = '' }) => {
   );
 };
 
+// Success Notification Component
+const SuccessNotification = ({ message, onClose }) => {
+  return (
+    <div className="fixed top-4 right-4 z-50">
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4 shadow-lg max-w-sm">
+        <div className="flex items-start">
+          <div className="flex-shrink-0">
+            <CheckCircle className="h-5 w-5 text-green-400" />
+          </div>
+          <div className="ml-3">
+            <p className="text-sm font-medium text-green-800">{message}</p>
+          </div>
+          <div className="ml-auto pl-3">
+            <div className="-mx-1.5 -my-1.5">
+              <button
+                type="button"
+                className="inline-flex rounded-md p-1.5 text-green-500 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-400"
+                onClick={onClose}
+              >
+                <span className="sr-only">Dismiss</span>
+                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Course Card Component
 const CourseCard = ({ course, onEnroll, recommended = false }) => {
   const [showEnrollDialog, setShowEnrollDialog] = useState(false);
+  const [isEnrolled, setIsEnrolled] = useState(course.isEnrolled || false);
 
   // Add safe defaults for missing data
   const safeInstructor = course.instructor || { name: 'Unknown Instructor', avatar: null };
@@ -93,12 +127,21 @@ const CourseCard = ({ course, onEnroll, recommended = false }) => {
 
   const handleEnrollClick = (e) => {
     e.stopPropagation();
+    if (isEnrolled) {
+      // If already enrolled, just continue to course
+      return;
+    }
     setShowEnrollDialog(true);
   };
 
   const handleConfirmEnroll = async () => {
-    await onEnroll(course.id);
-    setShowEnrollDialog(false);
+    try {
+      await onEnroll(course.id);
+      setIsEnrolled(true);
+      setShowEnrollDialog(false);
+    } catch (error) {
+      console.error('Enrollment error:', error);
+    }
   };
 
   return (
@@ -181,7 +224,7 @@ const CourseCard = ({ course, onEnroll, recommended = false }) => {
             onClick={handleEnrollClick}
           >
             <Play className="w-4 h-4 mr-2" />
-            {course.isEnrolled ? 'Continue' : 'Enroll Now'}
+            {isEnrolled ? 'Continue' : 'Enroll Now'}
           </Button>
           <Button variant="outline" size="icon">
             <Bookmark className="w-4 h-4" />
@@ -224,6 +267,8 @@ const ELearningPage = () => {
   const [selectedLevel, setSelectedLevel] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const categories = [
     { id: 'all', label: 'All Courses' },
@@ -292,19 +337,51 @@ const ELearningPage = () => {
   
   const handleEnroll = async (courseId) => {
     try {
-      const response = await fetch(`/api/courses/${courseId}/enroll`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-  
-      if (!response.ok) throw new Error('Failed to enroll');
-  
-      const updatedCourse = await response.json();
-      setSelectedCourse(updatedCourse);
+      // Simulate API call
+      console.log(`Enrolling in course ${courseId}`);
+      
+      // In a real app, you would make an actual API call here
+      // const response = await fetch(`https://connectyoubackend.nestsindia.com/api/courses/${courseId}/enroll`, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json'
+      //   }
+      // });
+      
+      // if (!response.ok) throw new Error('Failed to enroll');
+      
+      // Update the course in state
+      setCourses(prevCourses => 
+        prevCourses.map(course => 
+          course.id === courseId 
+            ? { ...course, isEnrolled: true } 
+            : course
+        )
+      );
+      
+      setRecommendedCourses(prevRecs => 
+        prevRecs.map(course => 
+          course.id === courseId 
+            ? { ...course, isEnrolled: true } 
+            : course
+        )
+      );
+      
+      // Show success notification
+      const enrolledCourse = courses.find(c => c.id === courseId) || 
+                           recommendedCourses.find(c => c.id === courseId);
+      setSuccessMessage(`Successfully enrolled in "${enrolledCourse?.title || 'the course'}"!`);
+      setShowSuccess(true);
+      
+      // Hide the notification after 5 seconds
+      setTimeout(() => {
+        setShowSuccess(false);
+      }, 5000);
+      
+      return { success: true };
     } catch (error) {
       console.error('Error enrolling in course:', error);
+      throw error;
     }
   };
 
@@ -393,6 +470,13 @@ const ELearningPage = () => {
     
         {/* Main Content */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {showSuccess && (
+            <SuccessNotification 
+              message={successMessage}
+              onClose={() => setShowSuccess(false)}
+            />
+          )}
+          
           {loading ? (
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600" />
